@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { askDocumentAction, improveAction, summarizeAction } from './actions';
+import { askDocumentAction, improveAction, summarizeAction, parsePdfAction } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -70,39 +70,39 @@ export default function Home() {
         });
         return;
       }
-      
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        setDocumentName(file.name);
-        setAskResult(null);
-        setIsLoading(true);
+      setDocumentName(file.name);
+      setAskResult(null); // Clear previous results
+      setIsLoading(true);
+
+      const processFile = async () => {
         try {
+          let textContent = '';
           if (file.type === 'application/pdf') {
-            const arrayBuffer = e.target?.result as ArrayBuffer;
-            const { parsePdf } = await import('@/lib/pdf-parser');
-            const text = await parsePdf(arrayBuffer);
-            setDocumentContent(text);
+            const formData = new FormData();
+            formData.append('file', file);
+            const result = await parsePdfAction(formData);
+            if (result.error || !result.data) {
+              throw new Error(result.error || 'Failed to parse PDF.');
+            }
+            textContent = result.data.documentContent;
           } else {
-            const text = e.target?.result as string;
-            setDocumentContent(text);
+            textContent = await file.text();
           }
+          setDocumentContent(textContent);
         } catch (error) {
-          console.error("Error parsing file:", error);
-          toast({
-            variant: 'destructive',
-            title: 'File Processing Error',
-            description: 'Could not read the content of the uploaded file.',
-          });
+           console.error("Error processing file:", error);
+           toast({
+             variant: 'destructive',
+             title: 'File Processing Error',
+             description: error instanceof Error ? error.message : 'Could not read or parse the uploaded file.',
+           });
+           setDocumentContent('');
+           setDocumentName('');
         } finally {
           setIsLoading(false);
         }
-      };
-      
-      if (file.type === 'application/pdf') {
-        reader.readAsArrayBuffer(file);
-      } else {
-        reader.readAsText(file);
       }
+      processFile();
     }
   };
 
@@ -161,7 +161,7 @@ export default function Home() {
   };
 
   const renderResults = () => {
-    if (isLoading) {
+    if (isLoading && !askResult && !summaryResult && !improvementResult) {
       return <ResultsSkeleton />;
     }
 
@@ -378,9 +378,10 @@ export default function Home() {
                       variant="outline"
                       onClick={() => fileInputRef.current?.click()}
                       className="w-full"
+                      disabled={isLoading}
                     >
                       <UploadCloud className="mr-2" />
-                      {documentName ? `Selected: ${documentName}` : 'Select a file'}
+                      {isLoading && !documentContent ? 'Processing...' : (documentName ? `Selected: ${documentName}` : 'Select a file')}
                     </Button>
                   </div>
                    {documentContent && (
@@ -399,7 +400,7 @@ export default function Home() {
                         disabled={isLoading || !documentQuery}
                         className="w-full"
                       >
-                        {isLoading && activeTab === 'ask' ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
+                        {isLoading ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
                       </Button>
                     </>
                   )}

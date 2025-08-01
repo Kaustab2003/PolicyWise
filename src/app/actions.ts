@@ -12,7 +12,31 @@ import {
   askDocument,
   type AskDocumentOutput,
 } from '@/ai/flows/ask-document';
-import pdf from 'pdf-parse';
+import { parsePdf } from '@/lib/pdf-parser';
+
+export async function parsePdfAction(formData: FormData): Promise<{
+  data: { documentContent: string } | null;
+  error: string | null;
+}> {
+  const file = formData.get('file') as File;
+  if (!file) {
+    return { data: null, error: 'No file uploaded.' };
+  }
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const documentContent = await parsePdf(arrayBuffer);
+    return { data: { documentContent }, error: null };
+  } catch (e) {
+    console.error('parsePdfAction failed:', e);
+    const errorMessage =
+      e instanceof Error ? e.message : 'An unknown error occurred.';
+    return {
+      data: null,
+      error: `Failed to parse PDF: ${errorMessage}`,
+    };
+  }
+}
 
 export async function askDocumentAction(
   documentContent: string,
