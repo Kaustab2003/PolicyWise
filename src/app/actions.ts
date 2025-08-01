@@ -8,6 +8,37 @@ import {
   suggestPolicyImprovements,
   type SuggestPolicyImprovementsOutput,
 } from '@/ai/flows/suggest-policy-improvements';
+import {
+  askDocument,
+  type AskDocumentOutput,
+} from '@/ai/flows/ask-document';
+
+export async function askDocumentAction(
+  documentContent: string,
+  userQuery: string
+): Promise<{ data: AskDocumentOutput | null; error: string | null }> {
+  if (!documentContent || !userQuery) {
+    return {
+      data: null,
+      error: 'Document content and user query are required.',
+    };
+  }
+
+  try {
+    const result = await askDocument({
+      documentContent,
+      userQuery,
+    });
+    return { data: result, error: null };
+  } catch (e) {
+    console.error('askDocumentAction failed:', e);
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+    return {
+      data: null,
+      error: `Failed to get answer from document: ${errorMessage}`,
+    };
+  }
+}
 
 export async function summarizeAction(
   policyDocument: string,
@@ -63,3 +94,5 @@ export async function improveAction(
     };
   }
 }
+
+    
