@@ -12,6 +12,12 @@ import {
   askDocument,
   type AskDocumentOutput,
 } from '@/ai/flows/ask-document';
+import pdf from 'pdf-parse';
+
+async function parsePdf(buffer: ArrayBuffer): Promise<string> {
+  const data = await pdf(Buffer.from(buffer));
+  return data.text;
+}
 
 export async function askDocumentAction(
   documentContent: string,

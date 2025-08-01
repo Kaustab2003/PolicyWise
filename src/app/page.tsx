@@ -62,23 +62,47 @@ export default function Home() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // For now, we only support text-based files.
-      if (!file.type.startsWith('text/')) {
+      if (!file.type.startsWith('text/') && file.type !== 'application/pdf') {
         toast({
           variant: 'destructive',
           title: 'Unsupported File Type',
-          description: 'Please upload a plain text file (.txt, .md, etc.). PDFs and other formats are not yet supported.',
+          description: 'Please upload a plain text file (.txt, .md) or a PDF.',
         });
         return;
       }
+      
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target?.result as string;
-        setDocumentContent(text);
+      reader.onload = async (e) => {
         setDocumentName(file.name);
         setAskResult(null);
+        setIsLoading(true);
+        try {
+          if (file.type === 'application/pdf') {
+            const arrayBuffer = e.target?.result as ArrayBuffer;
+            const { parsePdf } = await import('@/lib/pdf-parser');
+            const text = await parsePdf(arrayBuffer);
+            setDocumentContent(text);
+          } else {
+            const text = e.target?.result as string;
+            setDocumentContent(text);
+          }
+        } catch (error) {
+          console.error("Error parsing file:", error);
+          toast({
+            variant: 'destructive',
+            title: 'File Processing Error',
+            description: 'Could not read the content of the uploaded file.',
+          });
+        } finally {
+          setIsLoading(false);
+        }
       };
-      reader.readAsText(file);
+      
+      if (file.type === 'application/pdf') {
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.readAsText(file);
+      }
     }
   };
 
@@ -327,7 +351,7 @@ export default function Home() {
                     className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
                   >
                     {isLoading && activeTab === 'improve' ? 'Improving...' : <><Sparkles className="mr-2" />Suggest Improvements</>}
-                  </Button>
+                  </A>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -348,7 +372,7 @@ export default function Home() {
                       ref={fileInputRef}
                       onChange={handleFileChange}
                       className="hidden"
-                      accept="text/*"
+                      accept="text/*,application/pdf"
                     />
                     <Button
                       variant="outline"
@@ -356,7 +380,7 @@ export default function Home() {
                       className="w-full"
                     >
                       <UploadCloud className="mr-2" />
-                      {documentName ? `Selected: ${documentName}` : 'Select a text file'}
+                      {documentName ? `Selected: ${documentName}` : 'Select a file'}
                     </Button>
                   </div>
                    {documentContent && (
@@ -443,4 +467,3 @@ const ResultsSkeleton = () => (
     </Card>
   </div>
 );
-    
