@@ -351,7 +351,7 @@ export default function Home() {
                     className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
                   >
                     {isLoading && activeTab === 'improve' ? 'Improving...' : <><Sparkles className="mr-2" />Suggest Improvements</>}
-                  </A>
+                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>
