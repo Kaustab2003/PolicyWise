@@ -48,3 +48,50 @@ Using PolicyWise is straightforward. The user interface is divided into an input
 3.  **View Results**:
     -   After you submit your request, the AI will process it, and the results will appear in the "Results" card on the right-hand side of the screen.
     -   The results are tailored to the feature you used, displaying summaries, improvement suggestions, or direct answers as appropriate.
+
+## Running Locally with VS Code
+
+To run this project on your local machine using Visual Studio Code, follow these steps:
+
+### 1. Prerequisites
+- [Node.js](https://nodejs.org/) (version 18 or later recommended)
+- [Visual Studio Code](https://code.visualstudio.com/)
+
+### 2. Install Dependencies
+Open the project folder in VS Code. Then, open the integrated terminal (you can use `Ctrl+\``) and run the following command to install the necessary packages:
+
+```bash
+npm install
+```
+
+### 3. Set Up Environment Variables
+The application uses Google's Generative AI, which requires an API key.
+
+1.  Create a new file named `.env` in the root of the project directory.
+2.  Obtain a Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+3.  Add the key to your `.env` file like this:
+
+    ```
+    GEMINI_API_KEY=YOUR_API_KEY_HERE
+    ```
+
+### 4. Run the Development Servers
+This project requires two separate processes to be running at the same time:
+- The **Next.js frontend** application.
+- The **Genkit backend** for handling AI flows.
+
+You will need to open two separate terminals in VS Code to run them.
+
+-   **In your first terminal**, run the Next.js development server:
+    ```bash
+    npm run dev
+    ```
+    This will typically start the web application on `http://localhost:9002`.
+
+-   **In your second terminal**, run the Genkit AI flows:
+    ```bash
+    npm run genkit:watch
+    ```
+    This starts the Genkit development server and will automatically restart if you make changes to the AI flow files.
+
+Once both servers are running, you can open your browser to `http://localhost:9002` to use the application.
