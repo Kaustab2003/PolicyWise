@@ -13,10 +13,9 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, PanelLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
@@ -26,6 +25,9 @@ import { LanguageSelector } from '@/components/language-selector';
 import { VoiceInput } from '@/components/voice-input';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import Link from 'next/link';
+import { Logo } from '@/components/logo';
 
 const defaultPolicy = `## TechGadget Pro - 1-Year Limited Warranty
 
@@ -352,224 +354,252 @@ export default function Home() {
 
   return (
     <TooltipProvider>
-    <div className="flex flex-col bg-background text-foreground font-body">
-      <div className="container mx-auto p-4 md:p-8 flex-1">
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="flex flex-col gap-4">
-            <div className="flex justify-end">
-              <LanguageSelector value={language} onValueChange={setLanguage} />
+      <Sidebar collapsible="icon" variant="sidebar">
+        <SidebarHeader>
+          <Logo />
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton isActive={activeTab === 'query'} onClick={() => handleTabChange('query')} tooltip="Query Policy">
+                <FileSearch />
+                <span>Query Policy</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton isActive={activeTab === 'improve'} onClick={() => handleTabChange('improve')} tooltip="Improve Policy">
+                <Sparkles />
+                <span>Improve Policy</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton isActive={activeTab === 'ask'} onClick={() => handleTabChange('ask')} tooltip="Ask Document">
+                <FileQuestion />
+                <span>Ask Document</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton isActive={activeTab === 'translate'} onClick={() => handleTabChange('translate')} tooltip="Translate">
+                <MessageSquareQuote />
+                <span>Translate</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+      <SidebarInset>
+        <div className="flex flex-col h-full">
+          <header className="p-4 border-b flex justify-between items-center sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="md:hidden" />
+              <h2 className="text-xl font-semibold capitalize">{activeTab} Policy</h2>
             </div>
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="query">
-                  <FileSearch className="mr-2" /> Query Policy
-                </TabsTrigger>
-                <TabsTrigger value="improve">
-                  <Sparkles className="mr-2" /> Improve Policy
-                </TabsTrigger>
-                <TabsTrigger value="ask">
-                  <FileQuestion className="mr-2" /> Ask Document
-                </TabsTrigger>
-                <TabsTrigger value="translate">
-                  <MessageSquareQuote className="mr-2" /> Translate
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="query">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-headline">Analyze a Policy</CardTitle>
-                    <CardDescription>
-                      Enter a policy document and ask a question to get an AI-powered summary.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <label htmlFor="policy-doc-query" className="font-semibold">Policy Document</label>
-                      <Textarea
-                        id="policy-doc-query"
-                        placeholder="Paste your policy document here..."
-                        className="min-h-[250px] font-code text-xs"
-                        value={policy}
-                        onChange={(e) => setPolicy(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label htmlFor="user-query" className="font-semibold">Your Question</label>
-                      <div className="flex gap-2">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Input
-                              id="user-query"
-                              placeholder="e.g., Is water damage covered?"
-                              value={query}
-                              onChange={(e) => setQuery(e.target.value)}
-                            />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Type or speak in your preferred language</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      {isClient && browserSupportsSpeechRecognition && (
-                        <VoiceInput
-                          onToggle={handleVoiceSearch}
-                          isListening={listening}
+            <div className="flex items-center gap-4">
+              <LanguageSelector value={language} onValueChange={setLanguage} />
+              <Button variant="ghost" asChild>
+                <Link href="/about">About</Link>
+              </Button>
+            </div>
+          </header>
+          <main className="flex-1 overflow-auto p-4 md:p-8">
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="flex flex-col gap-4">
+                {activeTab === 'query' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="font-headline">Analyze a Policy</CardTitle>
+                      <CardDescription>
+                        Enter a policy document and ask a question to get an AI-powered summary.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <label htmlFor="policy-doc-query" className="font-semibold">Policy Document</label>
+                        <Textarea
+                          id="policy-doc-query"
+                          placeholder="Paste your policy document here..."
+                          className="min-h-[250px] font-code text-xs"
+                          value={policy}
+                          onChange={(e) => setPolicy(e.target.value)}
                         />
-                      )}
                       </div>
-                    </div>
-                    <Button
-                      onClick={handleSummarize}
-                      disabled={isLoading || !policy || !query}
-                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                      {isLoading && activeTab === 'query' ? 'Analyzing...' : <><FileSearch className="mr-2"/>Analyze Query</>}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="improve">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-headline">Improve a Policy Draft</CardTitle>
-                    <CardDescription>
-                      Get AI-powered suggestions to improve the clarity, fairness, and completeness of your policy.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <label htmlFor="policy-doc-improve" className="font-semibold">Policy Document</label>
-                      <Textarea
-                        id="policy-doc-improve"
-                        placeholder="Paste your policy draft here..."
-                        className="min-h-[350px] font-code text-xs"
-                        value={policy}
-                        onChange={(e) => setPolicy(e.target.value)}
-                      />
-                    </div>
-                    <Button
-                      onClick={handleImprove}
-                      disabled={isLoading || !policy}
-                      className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                    >
-                      {isLoading && activeTab === 'improve' ? 'Improving...' : <><Sparkles className="mr-2" />Suggest Improvements</>}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="ask">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-headline">Ask a Document</CardTitle>
-                    <CardDescription>
-                      Upload a document and ask a question to get an AI-powered answer.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <label htmlFor="doc-upload" className="font-semibold">Upload Document</label>
-                      <Input
-                        id="doc-upload"
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="hidden"
-                        accept="text/*,application/pdf"
-                      />
-                      <Button
-                        variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-full"
-                        disabled={isLoading}
-                      >
-                        <UploadCloud className="mr-2" />
-                        {isLoading && !documentContent ? 'Processing...' : (documentName ? `Selected: ${documentName}` : 'Select a file')}
-                      </Button>
-                    </div>
-                     {documentContent && (
-                      <>
-                        <div className="space-y-2">
-                          <label htmlFor="doc-query" className="font-semibold">Your Question</label>
-                          <div className="flex gap-2">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Input
-                                  id="doc-query"
-                                  placeholder="Ask anything about the document..."
-                                  value={documentQuery}
-                                  onChange={(e) => setDocumentQuery(e.target.value)}
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Type or speak in your preferred language</p>
-                              </TooltipContent>
-                            </Tooltip>
-                           {isClient && browserSupportsSpeechRecognition && (
-                              <VoiceInput
-                                  onToggle={handleVoiceSearch}
-                                  isListening={listening}
+                      <div className="space-y-2">
+                        <label htmlFor="user-query" className="font-semibold">Your Question</label>
+                        <div className="flex gap-2">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Input
+                                id="user-query"
+                                placeholder="e.g., Is water damage covered?"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
                               />
-                           )}
-                          </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Type or speak in your preferred language</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          {isClient && browserSupportsSpeechRecognition && (
+                            <VoiceInput
+                              onToggle={handleVoiceSearch}
+                              isListening={listening}
+                            />
+                          )}
                         </div>
+                      </div>
+                      <Button
+                        onClick={handleSummarize}
+                        disabled={isLoading || !policy || !query}
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                      >
+                        {isLoading && activeTab === 'query' ? 'Analyzing...' : <><FileSearch className="mr-2"/>Analyze Query</>}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+                {activeTab === 'improve' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="font-headline">Improve a Policy Draft</CardTitle>
+                      <CardDescription>
+                        Get AI-powered suggestions to improve the clarity, fairness, and completeness of your policy.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <label htmlFor="policy-doc-improve" className="font-semibold">Policy Document</label>
+                        <Textarea
+                          id="policy-doc-improve"
+                          placeholder="Paste your policy draft here..."
+                          className="min-h-[350px] font-code text-xs"
+                          value={policy}
+                          onChange={(e) => setPolicy(e.target.value)}
+                        />
+                      </div>
+                      <Button
+                        onClick={handleImprove}
+                        disabled={isLoading || !policy}
+                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                      >
+                        {isLoading && activeTab === 'improve' ? 'Improving...' : <><Sparkles className="mr-2" />Suggest Improvements</>}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+                {activeTab === 'ask' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="font-headline">Ask a Document</CardTitle>
+                      <CardDescription>
+                        Upload a document and ask a question to get an AI-powered answer.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <label htmlFor="doc-upload" className="font-semibold">Upload Document</label>
+                        <Input
+                          id="doc-upload"
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          className="hidden"
+                          accept="text/*,application/pdf"
+                        />
                         <Button
-                          onClick={handleAskDocument}
-                          disabled={isLoading || !documentQuery}
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
                           className="w-full"
+                          disabled={isLoading}
                         >
-                          {isLoading && activeTab === 'ask' ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
+                          <UploadCloud className="mr-2" />
+                          {isLoading && !documentContent ? 'Processing...' : (documentName ? `Selected: ${documentName}` : 'Select a file')}
                         </Button>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="translate">
-                <Card>
+                      </div>
+                       {documentContent && (
+                        <>
+                          <div className="space-y-2">
+                            <label htmlFor="doc-query" className="font-semibold">Your Question</label>
+                            <div className="flex gap-2">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Input
+                                    id="doc-query"
+                                    placeholder="Ask anything about the document..."
+                                    value={documentQuery}
+                                    onChange={(e) => setDocumentQuery(e.target.value)}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Type or speak in your preferred language</p>
+                                </TooltipContent>
+                              </Tooltip>
+                             {isClient && browserSupportsSpeechRecognition && (
+                                <VoiceInput
+                                    onToggle={handleVoiceSearch}
+                                    isListening={listening}
+                                />
+                             )}
+                            </div>
+                          </div>
+                          <Button
+                            onClick={handleAskDocument}
+                            disabled={isLoading || !documentQuery}
+                            className="w-full"
+                          >
+                            {isLoading && activeTab === 'ask' ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
+                          </Button>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+                {activeTab === 'translate' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="font-headline">Translate Text</CardTitle>
+                      <CardDescription>
+                        Enter text and select a language to translate it.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <label htmlFor="text-to-translate" className="font-semibold">Your Text</label>
+                        <Textarea
+                          id="text-to-translate"
+                          placeholder="Enter text to translate..."
+                          className="min-h-[250px]"
+                          value={textToTranslate}
+                          onChange={(e) => setTextToTranslate(e.target.value)}
+                        />
+                      </div>
+                      <Button
+                        onClick={handleTranslate}
+                        disabled={isLoading || !textToTranslate}
+                        className="w-full"
+                      >
+                        {isLoading && activeTab === 'translate' ? 'Translating...' : <><MessageSquareQuote className="mr-2" />Translate Text</>}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+              <aside className="h-full">
+                <Card className="sticky top-28 h-[calc(100vh-8rem)]">
                   <CardHeader>
-                    <CardTitle className="font-headline">Translate Text</CardTitle>
+                    <CardTitle className="font-headline">Results</CardTitle>
                     <CardDescription>
-                      Enter text and select a language to translate it.
+                      Your analysis will appear here.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <label htmlFor="text-to-translate" className="font-semibold">Your Text</label>
-                      <Textarea
-                        id="text-to-translate"
-                        placeholder="Enter text to translate..."
-                        className="min-h-[250px]"
-                        value={textToTranslate}
-                        onChange={(e) => setTextToTranslate(e.target.value)}
-                      />
-                    </div>
-                    <Button
-                      onClick={handleTranslate}
-                      disabled={isLoading || !textToTranslate}
-                      className="w-full"
-                    >
-                      {isLoading && activeTab === 'translate' ? 'Translating...' : <><MessageSquareQuote className="mr-2" />Translate Text</>}
-                    </Button>
+                  <CardContent className="overflow-y-auto h-[calc(100vh-14rem)]">
+                    {renderResults()}
                   </CardContent>
                 </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-          <aside className="h-full">
-            <Card className="sticky top-28 h-[calc(100vh-8rem)]">
-              <CardHeader>
-                <CardTitle className="font-headline">Results</CardTitle>
-                <CardDescription>
-                  Your analysis will appear here.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="overflow-y-auto h-[calc(100vh-14rem)]">
-                {renderResults()}
-              </CardContent>
-            </Card>
-          </aside>
+              </aside>
+            </div>
+          </main>
         </div>
-      </div>
-    </div>
+      </SidebarInset>
     </TooltipProvider>
   );
 }
