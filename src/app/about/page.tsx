@@ -33,7 +33,7 @@ export default function AboutPage() {
         </header>
       <main className="container mx-auto p-4 md:p-8 flex-1">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold font-headline mb-4 text-center text-primary">
+          <h1 className="text-4xl font-bold mb-4 text-center text-primary">
             Welcome to PolicyWise
           </h1>
           <p className="text-lg text-muted-foreground mb-12 text-center">
@@ -43,7 +43,7 @@ export default function AboutPage() {
 
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="font-headline text-2xl">
+              <CardTitle className="text-2xl">
                 How to Use PolicyWise
               </CardTitle>
               <CardDescription>
@@ -57,7 +57,7 @@ export default function AboutPage() {
                   <FileSearch className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold font-headline mb-2">
+                  <h3 className="text-xl font-bold mb-2">
                     Query Policy
                   </h3>
                   <p className="text-muted-foreground">
@@ -85,7 +85,7 @@ export default function AboutPage() {
                   <Sparkles className="h-8 w-8 text-accent" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold font-headline mb-2">
+                  <h3 className="text-xl font-bold mb-2">
                     Improve Policy
                   </h3>
                   <p className="text-muted-foreground">
@@ -113,7 +113,7 @@ export default function AboutPage() {
                   <FileQuestion className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold font-headline mb-2">
+                  <h3 className="text-xl font-bold mb-2">
                     Ask Document
                   </h3>
                   <p className="text-muted-foreground">
@@ -146,7 +146,7 @@ export default function AboutPage() {
                   <MessageSquareQuote className="h-8 w-8 text-accent" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold font-headline mb-2">
+                  <h3 className="text-xl font-bold mb-2">
                     Translate
                   </h3>
                   <p className="text-muted-foreground">
@@ -174,7 +174,7 @@ export default function AboutPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="font-headline text-2xl">
+              <CardTitle className="text-2xl">
                 Advanced Features
               </CardTitle>
             </CardHeader>

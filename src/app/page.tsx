@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, PanelLeft } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
@@ -25,9 +25,10 @@ import { LanguageSelector } from '@/components/language-selector';
 import { VoiceInput } from '@/components/voice-input';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
+import { cn } from '@/lib/utils';
 
 const defaultPolicy = `## TechGadget Pro - 1-Year Limited Warranty
 
@@ -227,9 +228,9 @@ export default function Home() {
 
     if (activeTab === 'translate' && translationResult) {
       return (
-        <Card>
+        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-headline">
+            <CardTitle className="flex items-center gap-2">
               <Bot className="text-primary" />
               Translated Text
             </CardTitle>
@@ -248,9 +249,9 @@ export default function Home() {
 
     if (activeTab === 'ask' && askResult) {
        return (
-        <Card>
+        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-headline">
+            <CardTitle className="flex items-center gap-2">
               <Bot className="text-primary" />
               AI Answer
             </CardTitle>
@@ -269,10 +270,10 @@ export default function Home() {
 
     if (activeTab === 'query' && summaryResult) {
       return (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-headline">
+              <CardTitle className="flex items-center gap-2">
                 <Bot className="text-primary" />
                 AI Summary
               </CardTitle>
@@ -293,7 +294,7 @@ export default function Home() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-headline">
+              <CardTitle className="flex items-center gap-2">
                 <BookMarked className="text-primary" />
                 Relevant Clauses
               </CardTitle>
@@ -320,9 +321,9 @@ export default function Home() {
 
     if (activeTab === 'improve' && improvementResult) {
       return (
-        <Card>
+        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-headline">
+            <CardTitle className="flex items-center gap-2">
               <BrainCircuit className="text-primary" />
               Suggested Improvements
             </CardTitle>
@@ -344,6 +345,8 @@ export default function Home() {
       emptyStateIcon = <FileQuestion className="h-12 w-12 text-primary" />;
     } else if (activeTab === 'translate') {
       emptyStateIcon = <MessageSquareQuote className="h-12 w-12 text-primary" />;
+    } else if (activeTab === 'improve') {
+      emptyStateIcon = <Sparkles className="h-12 w-12 text-primary" />;
     }
     return <EmptyState icon={emptyStateIcon} />;
   };
@@ -351,6 +354,202 @@ export default function Home() {
   const handleTabChange = (value: string) => {
     setActiveTab(value as 'query' | 'improve' | 'ask' | 'translate');
   };
+
+  const renderCurrentTab = () => {
+    const commonButtonClasses = "w-full transition-transform transform hover:scale-105";
+
+    if (activeTab === 'query') {
+      return (
+        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          <CardHeader>
+            <CardTitle>Analyze a Policy</CardTitle>
+            <CardDescription>
+              Enter a policy document and ask a question to get an AI-powered summary.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="policy-doc-query" className="font-semibold">Policy Document</label>
+              <Textarea
+                id="policy-doc-query"
+                placeholder="Paste your policy document here..."
+                className="min-h-[250px] font-code text-xs"
+                value={policy}
+                onChange={(e) => setPolicy(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="user-query" className="font-semibold">Your Question</label>
+              <div className="flex gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Input
+                      id="user-query"
+                      placeholder="e.g., Is water damage covered?"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Type or speak in your preferred language</p>
+                  </TooltipContent>
+                </Tooltip>
+                {isClient && browserSupportsSpeechRecognition && (
+                  <VoiceInput
+                    onToggle={handleVoiceSearch}
+                    isListening={listening}
+                  />
+                )}
+              </div>
+            </div>
+            <Button
+              onClick={handleSummarize}
+              disabled={isLoading || !policy || !query}
+              className={cn(commonButtonClasses, "bg-primary hover:bg-primary/90 text-primary-foreground")}
+            >
+              {isLoading && activeTab === 'query' ? 'Analyzing...' : <><FileSearch className="mr-2"/>Analyze Query</>}
+            </Button>
+          </CardContent>
+        </Card>
+      )
+    }
+
+    if (activeTab === 'improve') {
+      return (
+        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          <CardHeader>
+            <CardTitle>Improve a Policy Draft</CardTitle>
+            <CardDescription>
+              Get AI-powered suggestions to improve the clarity, fairness, and completeness of your policy.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="policy-doc-improve" className="font-semibold">Policy Document</label>
+              <Textarea
+                id="policy-doc-improve"
+                placeholder="Paste your policy draft here..."
+                className="min-h-[350px] font-code text-xs"
+                value={policy}
+                onChange={(e) => setPolicy(e.target.value)}
+              />
+            </div>
+            <Button
+              onClick={handleImprove}
+              disabled={isLoading || !policy}
+              className={cn(commonButtonClasses, "bg-accent hover:bg-accent/90 text-accent-foreground")}
+            >
+              {isLoading && activeTab === 'improve' ? 'Improving...' : <><Sparkles className="mr-2" />Suggest Improvements</>}
+            </Button>
+          </CardContent>
+        </Card>
+      )
+    }
+
+    if (activeTab === 'ask') {
+      return (
+        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          <CardHeader>
+            <CardTitle>Ask a Document</CardTitle>
+            <CardDescription>
+              Upload a document and ask a question to get an AI-powered answer.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="doc-upload" className="font-semibold">Upload Document</label>
+              <Input
+                id="doc-upload"
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                accept="text/*,application/pdf"
+              />
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full"
+                disabled={isLoading}
+              >
+                <UploadCloud className="mr-2" />
+                {isLoading && !documentContent ? 'Processing...' : (documentName ? `Selected: ${documentName}` : 'Select a file')}
+              </Button>
+            </div>
+              {documentContent && (
+              <>
+                <div className="space-y-2">
+                  <label htmlFor="doc-query" className="font-semibold">Your Question</label>
+                  <div className="flex gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Input
+                          id="doc-query"
+                          placeholder="Ask anything about the document..."
+                          value={documentQuery}
+                          onChange={(e) => setDocumentQuery(e.target.value)}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Type or speak in your preferred language</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    {isClient && browserSupportsSpeechRecognition && (
+                      <VoiceInput
+                          onToggle={handleVoiceSearch}
+                          isListening={listening}
+                      />
+                    )}
+                  </div>
+                </div>
+                <Button
+                  onClick={handleAskDocument}
+                  disabled={isLoading || !documentQuery}
+                  className={commonButtonClasses}
+                >
+                  {isLoading && activeTab === 'ask' ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )
+    }
+    
+    if (activeTab === 'translate') {
+       return (
+        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          <CardHeader>
+            <CardTitle>Translate Text</CardTitle>
+            <CardDescription>
+              Enter text and select a language to translate it.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="text-to-translate" className="font-semibold">Your Text</label>
+              <Textarea
+                id="text-to-translate"
+                placeholder="Enter text to translate..."
+                className="min-h-[250px]"
+                value={textToTranslate}
+                onChange={(e) => setTextToTranslate(e.target.value)}
+              />
+            </div>
+            <Button
+              onClick={handleTranslate}
+              disabled={isLoading || !textToTranslate}
+              className={commonButtonClasses}
+            >
+              {isLoading && activeTab === 'translate' ? 'Translating...' : <><MessageSquareQuote className="mr-2" />Translate Text</>}
+            </Button>
+          </CardContent>
+        </Card>
+       )
+    }
+
+    return null;
+  }
 
   return (
     <TooltipProvider>
@@ -404,189 +603,12 @@ export default function Home() {
           <main className="flex-1 overflow-auto p-4 md:p-8">
             <div className="grid md:grid-cols-2 gap-8">
               <div className="flex flex-col gap-4">
-                {activeTab === 'query' && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="font-headline">Analyze a Policy</CardTitle>
-                      <CardDescription>
-                        Enter a policy document and ask a question to get an AI-powered summary.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <label htmlFor="policy-doc-query" className="font-semibold">Policy Document</label>
-                        <Textarea
-                          id="policy-doc-query"
-                          placeholder="Paste your policy document here..."
-                          className="min-h-[250px] font-code text-xs"
-                          value={policy}
-                          onChange={(e) => setPolicy(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label htmlFor="user-query" className="font-semibold">Your Question</label>
-                        <div className="flex gap-2">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Input
-                                id="user-query"
-                                placeholder="e.g., Is water damage covered?"
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                              />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Type or speak in your preferred language</p>
-                            </TooltipContent>
-                          </Tooltip>
-                          {isClient && browserSupportsSpeechRecognition && (
-                            <VoiceInput
-                              onToggle={handleVoiceSearch}
-                              isListening={listening}
-                            />
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        onClick={handleSummarize}
-                        disabled={isLoading || !policy || !query}
-                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                      >
-                        {isLoading && activeTab === 'query' ? 'Analyzing...' : <><FileSearch className="mr-2"/>Analyze Query</>}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-                {activeTab === 'improve' && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="font-headline">Improve a Policy Draft</CardTitle>
-                      <CardDescription>
-                        Get AI-powered suggestions to improve the clarity, fairness, and completeness of your policy.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <label htmlFor="policy-doc-improve" className="font-semibold">Policy Document</label>
-                        <Textarea
-                          id="policy-doc-improve"
-                          placeholder="Paste your policy draft here..."
-                          className="min-h-[350px] font-code text-xs"
-                          value={policy}
-                          onChange={(e) => setPolicy(e.target.value)}
-                        />
-                      </div>
-                      <Button
-                        onClick={handleImprove}
-                        disabled={isLoading || !policy}
-                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                      >
-                        {isLoading && activeTab === 'improve' ? 'Improving...' : <><Sparkles className="mr-2" />Suggest Improvements</>}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-                {activeTab === 'ask' && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="font-headline">Ask a Document</CardTitle>
-                      <CardDescription>
-                        Upload a document and ask a question to get an AI-powered answer.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <label htmlFor="doc-upload" className="font-semibold">Upload Document</label>
-                        <Input
-                          id="doc-upload"
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleFileChange}
-                          className="hidden"
-                          accept="text/*,application/pdf"
-                        />
-                        <Button
-                          variant="outline"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-full"
-                          disabled={isLoading}
-                        >
-                          <UploadCloud className="mr-2" />
-                          {isLoading && !documentContent ? 'Processing...' : (documentName ? `Selected: ${documentName}` : 'Select a file')}
-                        </Button>
-                      </div>
-                       {documentContent && (
-                        <>
-                          <div className="space-y-2">
-                            <label htmlFor="doc-query" className="font-semibold">Your Question</label>
-                            <div className="flex gap-2">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Input
-                                    id="doc-query"
-                                    placeholder="Ask anything about the document..."
-                                    value={documentQuery}
-                                    onChange={(e) => setDocumentQuery(e.target.value)}
-                                  />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Type or speak in your preferred language</p>
-                                </TooltipContent>
-                              </Tooltip>
-                             {isClient && browserSupportsSpeechRecognition && (
-                                <VoiceInput
-                                    onToggle={handleVoiceSearch}
-                                    isListening={listening}
-                                />
-                             )}
-                            </div>
-                          </div>
-                          <Button
-                            onClick={handleAskDocument}
-                            disabled={isLoading || !documentQuery}
-                            className="w-full"
-                          >
-                            {isLoading && activeTab === 'ask' ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
-                          </Button>
-                        </>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-                {activeTab === 'translate' && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="font-headline">Translate Text</CardTitle>
-                      <CardDescription>
-                        Enter text and select a language to translate it.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <label htmlFor="text-to-translate" className="font-semibold">Your Text</label>
-                        <Textarea
-                          id="text-to-translate"
-                          placeholder="Enter text to translate..."
-                          className="min-h-[250px]"
-                          value={textToTranslate}
-                          onChange={(e) => setTextToTranslate(e.target.value)}
-                        />
-                      </div>
-                      <Button
-                        onClick={handleTranslate}
-                        disabled={isLoading || !textToTranslate}
-                        className="w-full"
-                      >
-                        {isLoading && activeTab === 'translate' ? 'Translating...' : <><MessageSquareQuote className="mr-2" />Translate Text</>}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
+                {renderCurrentTab()}
               </div>
               <aside className="h-full">
                 <Card className="sticky top-28 h-[calc(100vh-8rem)]">
                   <CardHeader>
-                    <CardTitle className="font-headline">Results</CardTitle>
+                    <CardTitle>Results</CardTitle>
                     <CardDescription>
                       Your analysis will appear here.
                     </CardDescription>
@@ -605,11 +627,11 @@ export default function Home() {
 }
 
 const EmptyState = ({ icon }: { icon: React.ReactNode }) => (
-  <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
+  <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 animate-in fade-in-50 duration-500">
     <div className="p-4 rounded-full bg-muted mb-4">
       {icon}
     </div>
-    <h3 className="text-lg font-semibold text-foreground font-headline">Ready for Analysis</h3>
+    <h3 className="text-lg font-semibold text-foreground">Ready for Analysis</h3>
     <p className="mt-1">
       Your results will be displayed here once you submit an item for analysis.
     </p>

@@ -7,7 +7,7 @@ export function Logo({ className }: { className?: string }) {
       <div className="p-2 bg-primary/20 rounded-lg">
         <BookMarked className="h-6 w-6 text-primary" />
       </div>
-      <h1 className="text-2xl font-bold font-headline text-foreground tracking-tight">
+      <h1 className="text-2xl font-bold text-foreground tracking-tight">
         PolicyWise
       </h1>
     </div>
