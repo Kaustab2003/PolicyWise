@@ -26,6 +26,7 @@ import { Logo } from '@/components/logo';
 import { LanguageSelector } from '@/components/language-selector';
 import { VoiceInput } from '@/components/voice-input';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const defaultPolicy = `## TechGadget Pro - 1-Year Limited Warranty
 
@@ -351,6 +352,7 @@ export default function Home() {
   };
 
   return (
+    <TooltipProvider>
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <header className="p-4 border-b flex justify-between items-center">
         <Logo />
@@ -395,12 +397,19 @@ export default function Home() {
                   <div className="space-y-2">
                     <label htmlFor="user-query" className="font-semibold">Your Question</label>
                     <div className="flex gap-2">
-                    <Input
-                      id="user-query"
-                      placeholder="e.g., Is water damage covered?"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                    />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Input
+                            id="user-query"
+                            placeholder="e.g., Is water damage covered?"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Type or speak in your preferred language</p>
+                        </TooltipContent>
+                      </Tooltip>
                     {isClient && browserSupportsSpeechRecognition && (
                       <VoiceInput
                         onToggle={handleVoiceSearch}
@@ -482,12 +491,19 @@ export default function Home() {
                       <div className="space-y-2">
                         <label htmlFor="doc-query" className="font-semibold">Your Question</label>
                         <div className="flex gap-2">
-                        <Input
-                          id="doc-query"
-                          placeholder="Ask anything about the document..."
-                          value={documentQuery}
-                          onChange={(e) => setDocumentQuery(e.target.value)}
-                        />
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Input
+                                id="doc-query"
+                                placeholder="Ask anything about the document..."
+                                value={documentQuery}
+                                onChange={(e) => setDocumentQuery(e.target.value)}
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Type or speak in your preferred language</p>
+                            </TooltipContent>
+                          </Tooltip>
                          {isClient && browserSupportsSpeechRecognition && (
                             <VoiceInput
                                 onToggle={handleVoiceSearch}
@@ -501,7 +517,7 @@ export default function Home() {
                         disabled={isLoading || !documentQuery}
                         className="w-full"
                       >
-                        {isLoading ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
+                        {isLoading && activeTab === 'ask' ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
                       </Button>
                     </>
                   )}
@@ -554,6 +570,7 @@ export default function Home() {
         </aside>
       </main>
     </div>
+    </TooltipProvider>
   );
 }
 

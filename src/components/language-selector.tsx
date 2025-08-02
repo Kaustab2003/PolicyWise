@@ -20,15 +20,15 @@ import {
 } from "@/components/ui/popover"
 
 const languages = [
-  { value: "en", label: "English" },
-  { value: "es", label: "Español" },
-  { value: "fr", label: "Français" },
-  { value: "de", label: "Deutsch" },
-  { value: "hi", label: "हिन्दी" },
-  { value: "ja", label: "日本語" },
-  { value: "pt", label: "Português" },
-  { value: "ru", label: "Русский" },
-  { value: "zh", label: "中文" },
+    { value: "en", label: "English", flag: "🇬🇧" },
+    { value: "es", label: "Español", flag: "🇪🇸" },
+    { value: "fr", label: "Français", flag: "🇫🇷" },
+    { value: "de", label: "Deutsch", flag: "🇩🇪" },
+    { value: "hi", label: "हिन्दी", flag: "🇮🇳" },
+    { value: "ja", label: "日本語", flag: "🇯🇵" },
+    { value: "pt", label: "Português", flag: "🇵🇹" },
+    { value: "ru", label: "Русский", flag: "🇷🇺" },
+    { value: "zh", label: "中文", flag: "🇨🇳" },
 ]
 
 type LanguageSelectorProps = {
@@ -39,6 +39,8 @@ type LanguageSelectorProps = {
 export function LanguageSelector({ value, onValueChange }: LanguageSelectorProps) {
   const [open, setOpen] = React.useState(false)
 
+  const selectedLanguage = languages.find((language) => language.value === value);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -47,10 +49,18 @@ export function LanguageSelector({ value, onValueChange }: LanguageSelectorProps
           role="combobox"
           aria-expanded={open}
           className="w-[200px] justify-between"
+          aria-label="Select a language"
         >
-          {value
-            ? languages.find((language) => language.value === value)?.label
-            : "Select language..."}
+            <div className="flex items-center gap-2">
+                {selectedLanguage ? (
+                    <>
+                    <span className="text-lg">{selectedLanguage.flag}</span>
+                    {selectedLanguage.label}
+                    </>
+                ) : (
+                    "Select language..."
+                )}
+            </div>
           <Languages className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -75,6 +85,7 @@ export function LanguageSelector({ value, onValueChange }: LanguageSelectorProps
                       value === language.value ? "opacity-100" : "opacity-0"
                     )}
                   />
+                  <span className="mr-2 text-lg">{language.flag}</span>
                   {language.label}
                 </CommandItem>
               ))}
