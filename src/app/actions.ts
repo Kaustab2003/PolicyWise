@@ -1,6 +1,5 @@
 'use server';
 
-import { ai } from '@/ai/genkit';
 import {
   generateSummaryFromQuery,
   type GenerateSummaryFromQueryOutput,
@@ -13,16 +12,37 @@ import {
   askDocument,
   type AskDocumentOutput,
 } from '@/ai/flows/ask-document';
-import { translateText } from '@/ai/flows/translate-text';
+import { translateText, type TranslateTextOutput } from '@/ai/flows/translate-text';
 import { parsePdf } from '@/lib/pdf-parser';
 
 async function translate(text: string, targetLanguage: string): Promise<string> {
-  if (targetLanguage === 'en' && !text) {
-    // Avoids attempting to translate empty strings
+  if (targetLanguage === 'en' || !text) {
+    // Avoids attempting to translate empty or english strings
     return text;
   }
   const result = await translateText({ text, targetLanguage });
   return result.translatedText;
+}
+
+export async function translateAction(
+  textToTranslate: string,
+  targetLanguage: string,
+): Promise<{ data: TranslateTextOutput | null; error: string | null }> {
+  if (!textToTranslate) {
+    return { data: null, error: 'Text to translate is required.' };
+  }
+
+  try {
+    const translatedText = await translate(textToTranslate, targetLanguage);
+    return { data: { translatedText }, error: null };
+  } catch (e) {
+    console.error('translateAction failed:', e);
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+    return {
+      data: null,
+      error: `Failed to translate text: ${errorMessage}`,
+    };
+  }
 }
 
 export async function parsePdfAction(formData: FormData): Promise<{

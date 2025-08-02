@@ -2,7 +2,7 @@
 
 import 'regenerator-runtime/runtime';
 import { useState, useRef, useEffect } from 'react';
-import { askDocumentAction, improveAction, summarizeAction, parsePdfAction } from './actions';
+import { askDocumentAction, improveAction, summarizeAction, parsePdfAction, translateAction } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -47,7 +47,7 @@ If a defect arises and a valid claim is received by TechGadget within the Warran
 export default function Home() {
   const [policy, setPolicy] = useState(defaultPolicy);
   const [query, setQuery] = useState('Is accidental drop damage covered?');
-  const [activeTab, setActiveTab] = useState<'query' | 'improve' | 'ask'>('query');
+  const [activeTab, setActiveTab] = useState<'query' | 'improve' | 'ask' | 'translate'>('query');
   const [language, setLanguage] = useState('en');
 
   // State for document Q&A
@@ -56,6 +56,10 @@ export default function Home() {
   const [documentQuery, setDocumentQuery] = useState('');
   const [askResult, setAskResult] = useState<AskDocumentOutput | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // State for translation
+  const [textToTranslate, setTextToTranslate] = useState('');
+  const [translationResult, setTranslationResult] = useState<TranslateTextOutput | null>(null);
 
   const [summaryResult, setSummaryResult] =
     useState<GenerateSummaryFromQueryOutput | null>(null);
@@ -64,6 +68,11 @@ export default function Home() {
 
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const {
     transcript,
@@ -183,6 +192,23 @@ export default function Home() {
     setIsLoading(false);
   };
   
+  const handleTranslate = async () => {
+    setIsLoading(true);
+    setTranslationResult(null);
+    const result = await translateAction(textToTranslate, language);
+    if (result.error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: result.error,
+      });
+      setTranslationResult(null);
+    } else {
+      setTranslationResult(result.data);
+    }
+    setIsLoading(false);
+  };
+  
   const handleVoiceSearch = () => {
     if (listening) {
       SpeechRecognition.stopListening();
@@ -193,8 +219,29 @@ export default function Home() {
   };
 
   const renderResults = () => {
-    if (isLoading && !askResult && !summaryResult && !improvementResult) {
+    if (isLoading && !askResult && !summaryResult && !improvementResult && !translationResult) {
       return <ResultsSkeleton />;
+    }
+
+    if (activeTab === 'translate' && translationResult) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-headline">
+              <Bot className="text-primary" />
+              Translated Text
+            </CardTitle>
+            <CardDescription>
+              The translated text is below.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+              {translationResult.translatedText}
+            </div>
+          </CardContent>
+        </Card>
+      )
     }
 
     if (activeTab === 'ask' && askResult) {
@@ -293,12 +340,14 @@ export default function Home() {
     let emptyStateIcon = <FileSearch className="h-12 w-12 text-primary" />;
     if (activeTab === 'ask') {
       emptyStateIcon = <FileQuestion className="h-12 w-12 text-primary" />;
+    } else if (activeTab === 'translate') {
+      emptyStateIcon = <MessageSquareQuote className="h-12 w-12 text-primary" />;
     }
     return <EmptyState icon={emptyStateIcon} />;
   };
 
   const handleTabChange = (value: string) => {
-    setActiveTab(value as 'query' | 'improve' | 'ask');
+    setActiveTab(value as 'query' | 'improve' | 'ask' | 'translate');
   };
 
   return (
@@ -310,7 +359,7 @@ export default function Home() {
       <main className="flex-1 grid md:grid-cols-2 gap-8 p-4 md:p-8">
         <div className="flex flex-col gap-4">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="query">
                 <FileSearch className="mr-2" /> Query Policy
               </TabsTrigger>
@@ -319,6 +368,9 @@ export default function Home() {
               </TabsTrigger>
               <TabsTrigger value="ask">
                 <FileQuestion className="mr-2" /> Ask Document
+              </TabsTrigger>
+              <TabsTrigger value="translate">
+                <MessageSquareQuote className="mr-2" /> Translate
               </TabsTrigger>
             </TabsList>
             <TabsContent value="query">
@@ -349,7 +401,7 @@ export default function Home() {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                     />
-                    {browserSupportsSpeechRecognition && (
+                    {isClient && browserSupportsSpeechRecognition && (
                       <VoiceInput
                         onToggle={handleVoiceSearch}
                         isListening={listening}
@@ -396,7 +448,7 @@ export default function Home() {
                 </CardContent>
               </Card>
             </TabsContent>
-             <TabsContent value="ask">
+            <TabsContent value="ask">
               <Card>
                 <CardHeader>
                   <CardTitle className="font-headline">Ask a Document</CardTitle>
@@ -436,7 +488,7 @@ export default function Home() {
                           value={documentQuery}
                           onChange={(e) => setDocumentQuery(e.target.value)}
                         />
-                         {browserSupportsSpeechRecognition && (
+                         {isClient && browserSupportsSpeechRecognition && (
                             <VoiceInput
                                 onToggle={handleVoiceSearch}
                                 isListening={listening}
@@ -453,6 +505,35 @@ export default function Home() {
                       </Button>
                     </>
                   )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="translate">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-headline">Translate Text</CardTitle>
+                  <CardDescription>
+                    Enter text and select a language to translate it.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="text-to-translate" className="font-semibold">Your Text</label>
+                    <Textarea
+                      id="text-to-translate"
+                      placeholder="Enter text to translate..."
+                      className="min-h-[250px]"
+                      value={textToTranslate}
+                      onChange={(e) => setTextToTranslate(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleTranslate}
+                    disabled={isLoading || !textToTranslate}
+                    className="w-full"
+                  >
+                    {isLoading && activeTab === 'translate' ? 'Translating...' : <><MessageSquareQuote className="mr-2" />Translate Text</>}
+                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>
