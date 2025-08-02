@@ -37,7 +37,10 @@ const translateTextFlow = ai.defineFlow(
     outputSchema: TranslateTextOutputSchema,
   },
   async ({ text, targetLanguage }) => {
-    const prompt = `Translate the following text to ${targetLanguage}: ${text}`;
+    const prompt = `You are an expert translator. Translate the following text to the language with the ISO 639-1 code "${targetLanguage}".
+
+Text to translate:
+${text}`;
 
     const llmResponse = await generate({
       prompt: prompt,

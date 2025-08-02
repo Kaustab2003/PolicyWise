@@ -1,5 +1,6 @@
 'use server';
 
+import { ai } from '@/ai/genkit';
 import {
   generateSummaryFromQuery,
   type GenerateSummaryFromQueryOutput,
@@ -12,7 +13,7 @@ import {
   askDocument,
   type AskDocumentOutput,
 } from '@/ai/flows/ask-document';
-import { translateText, type TranslateTextInput } from '@/ai/flows/translate-text';
+import { translateText } from '@/ai/flows/translate-text';
 import { parsePdf } from '@/lib/pdf-parser';
 
 async function translate(text: string, targetLanguage: string): Promise<string> {
