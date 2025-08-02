@@ -9,7 +9,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { generate } from 'genkit';
 
 const TranslateTextInputSchema = z.object({
   text: z.string().describe('The text to be translated.'),
@@ -30,26 +29,26 @@ export async function translateText(
   return translateTextFlow(input);
 }
 
+const translatePrompt = ai.definePrompt({
+  name: 'translatePrompt',
+  input: { schema: TranslateTextInputSchema },
+  output: { schema: TranslateTextOutputSchema },
+  prompt: `You are an expert translator. Translate the following text into the language with the ISO 639-1 code "{{targetLanguage}}".
+
+Return only the translated text.
+
+Text to translate:
+{{{text}}}`,
+});
+
 const translateTextFlow = ai.defineFlow(
   {
     name: 'translateTextFlow',
     inputSchema: TranslateTextInputSchema,
     outputSchema: TranslateTextOutputSchema,
   },
-  async ({ text, targetLanguage }) => {
-    const prompt = `You are an expert translator. Translate the following text to the language with the ISO 639-1 code "${targetLanguage}".
-
-Text to translate:
-${text}`;
-
-    const llmResponse = await generate({
-      prompt: prompt,
-      model: 'googleai/gemini-2.0-flash',
-      output: {
-        format: 'text',
-      },
-    });
-
-    return { translatedText: llmResponse.text! };
+  async (input) => {
+    const { output } = await translatePrompt(input);
+    return output!;
   }
 );
