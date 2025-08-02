@@ -12,7 +12,16 @@ import {
   askDocument,
   type AskDocumentOutput,
 } from '@/ai/flows/ask-document';
+import { translateText, type TranslateTextInput } from '@/ai/flows/translate-text';
 import { parsePdf } from '@/lib/pdf-parser';
+
+async function translate(text: string, targetLanguage: string): Promise<string> {
+  if (targetLanguage === 'en') {
+    return text;
+  }
+  const result = await translateText({ text, targetLanguage });
+  return result.translatedText;
+}
 
 export async function parsePdfAction(formData: FormData): Promise<{
   data: { documentContent: string } | null;
@@ -40,7 +49,8 @@ export async function parsePdfAction(formData: FormData): Promise<{
 
 export async function askDocumentAction(
   documentContent: string,
-  userQuery: string
+  userQuery: string,
+  language: string,
 ): Promise<{ data: AskDocumentOutput | null; error: string | null }> {
   if (!documentContent || !userQuery) {
     return {
@@ -50,11 +60,15 @@ export async function askDocumentAction(
   }
 
   try {
+    const translatedQuery = await translate(userQuery, 'en');
     const result = await askDocument({
       documentContent,
-      userQuery,
+      userQuery: translatedQuery,
     });
-    return { data: result, error: null };
+    
+    const translatedAnswer = await translate(result.answer, language);
+
+    return { data: { answer: translatedAnswer }, error: null };
   } catch (e) {
     console.error('askDocumentAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
@@ -67,7 +81,8 @@ export async function askDocumentAction(
 
 export async function summarizeAction(
   policyDocument: string,
-  userQuery: string
+  userQuery: string,
+  language: string,
 ): Promise<{ data: GenerateSummaryFromQueryOutput | null; error: string | null }> {
   if (!policyDocument || !userQuery) {
     return {
@@ -77,14 +92,19 @@ export async function summarizeAction(
   }
 
   try {
+    const translatedQuery = await translate(userQuery, 'en');
     const result = await generateSummaryFromQuery({
       policyDocument,
-      userQuery,
-      // The user request implies clause classification is an automated backend step.
-      // We provide a static, sensible default here for the flow.
+      userQuery: translatedQuery,
       clauseClassifications: 'Coverage, Exclusion, Limit, Definition, Service',
     });
-    return { data: result, error: null };
+
+    const translatedSummary = await translate(result.summary, language);
+    const translatedClauses = await Promise.all(
+      result.relevantClauses.map((clause) => translate(clause, language))
+    );
+
+    return { data: { ...result, summary: translatedSummary, relevantClauses: translatedClauses }, error: null };
   } catch (e) {
     console.error('summarizeAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
@@ -96,7 +116,8 @@ export async function summarizeAction(
 }
 
 export async function improveAction(
-  policyDocument: string
+  policyDocument: string,
+  language: string,
 ): Promise<{
   data: SuggestPolicyImprovementsOutput | null;
   error: string | null;
@@ -109,7 +130,10 @@ export async function improveAction(
     const result = await suggestPolicyImprovements({
       policyDocument,
     });
-    return { data: result, error: null };
+    
+    const translatedImprovements = await translate(result.suggestedImprovements, language);
+
+    return { data: { suggestedImprovements: translatedImprovements }, error: null };
   } catch (e) {
     console.error('improveAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';

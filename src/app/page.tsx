@@ -21,6 +21,7 @@ import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
 import type { AskDocumentOutput } from '@/ai/flows/ask-document';
 import { Logo } from '@/components/logo';
+import { LanguageSelector } from '@/components/language-selector';
 
 const defaultPolicy = `## TechGadget Pro - 1-Year Limited Warranty
 
@@ -43,6 +44,7 @@ export default function Home() {
   const [policy, setPolicy] = useState(defaultPolicy);
   const [query, setQuery] = useState('Is accidental drop damage covered?');
   const [activeTab, setActiveTab] = useState<'query' | 'improve' | 'ask'>('query');
+  const [language, setLanguage] = useState('en');
 
   // State for document Q&A
   const [documentContent, setDocumentContent] = useState('');
@@ -110,7 +112,7 @@ export default function Home() {
     setIsLoading(true);
     setSummaryResult(null);
     setImprovementResult(null);
-    const result = await askDocumentAction(documentContent, documentQuery);
+    const result = await askDocumentAction(documentContent, documentQuery, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -128,7 +130,7 @@ export default function Home() {
     setIsLoading(true);
     setImprovementResult(null);
     setAskResult(null);
-    const result = await summarizeAction(policy, query);
+    const result = await summarizeAction(policy, query, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -146,7 +148,7 @@ export default function Home() {
     setIsLoading(true);
     setSummaryResult(null);
     setAskResult(null);
-    const result = await improveAction(policy);
+    const result = await improveAction(policy, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -271,8 +273,9 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
-      <header className="p-4 border-b">
+      <header className="p-4 border-b flex justify-between items-center">
         <Logo />
+        <LanguageSelector value={language} onValueChange={setLanguage} />
       </header>
       <main className="flex-1 grid md:grid-cols-2 gap-8 p-4 md:p-8">
         <div className="flex flex-col gap-4">
