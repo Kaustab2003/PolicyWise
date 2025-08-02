@@ -356,7 +356,7 @@ export default function Home() {
   };
 
   const renderCurrentTab = () => {
-    const commonButtonClasses = "w-full transition-transform transform hover:scale-105";
+    const commonButtonClasses = "w-full transition-all transform hover:scale-105 hover:brightness-110 hover:saturate-125 active:scale-100";
 
     if (activeTab === 'query') {
       return (
@@ -505,7 +505,7 @@ export default function Home() {
                 <Button
                   onClick={handleAskDocument}
                   disabled={isLoading || !documentQuery}
-                  className={commonButtonClasses}
+                  className={cn(commonButtonClasses, "bg-primary hover:bg-primary/90 text-primary-foreground")}
                 >
                   {isLoading && activeTab === 'ask' ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
                 </Button>
@@ -539,7 +539,7 @@ export default function Home() {
             <Button
               onClick={handleTranslate}
               disabled={isLoading || !textToTranslate}
-              className={commonButtonClasses}
+              className={cn(commonButtonClasses, "bg-primary hover:bg-primary/90 text-primary-foreground")}
             >
               {isLoading && activeTab === 'translate' ? 'Translating...' : <><MessageSquareQuote className="mr-2" />Translate Text</>}
             </Button>
