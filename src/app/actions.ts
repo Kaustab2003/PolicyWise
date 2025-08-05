@@ -39,8 +39,8 @@ export async function parsePdfAction(
     }
     
     // Making a fetch call to the API route from a server action.
-    // We use a relative path, and Next.js handles it correctly on the server.
-    const response = await fetch(new URL('/api/parse-pdf', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'), {
+    const apiUrl = new URL('/api/parse-pdf', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002');
+    const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dataUri }),

@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     const base64Data = dataUri.split(',')[1];
     const buffer = Buffer.from(base64Data, 'base64');
     
+    // Use the built-in page-splitting capabilities of pdf-parse
     const data = await pdf(buffer);
 
     // `data.text` can have page breaks. We will make them more explicit for the AI.
