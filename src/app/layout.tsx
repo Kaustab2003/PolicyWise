@@ -6,7 +6,6 @@ import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
-import ParticleBackground from '@/components/particle-background';
 
 export const metadata: Metadata = {
   title: 'PolicyWise',
@@ -32,7 +31,6 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ParticleBackground />
           <SidebarProvider>
             {children}
           </SidebarProvider>

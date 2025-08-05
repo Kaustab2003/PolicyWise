@@ -1588,59 +1588,59 @@ export default function Home() {
 
   return (
     <TooltipProvider>
-      <Sidebar collapsible="icon" variant="sidebar">
-        <SidebarHeader>
-          <Logo />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton isActive={activeTab === 'query'} onClick={() => handleTabChange('query')} tooltip="Query Policy">
-                <FileSearch />
-                <span>Query Policy</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton isActive={activeTab === 'improve'} onClick={() => handleTabChange('improve')} tooltip="Improve Policy">
-                <Sparkles />
-                <span>Improve Policy</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton isActive={activeTab === 'ask'} onClick={() => handleTabChange('ask')} tooltip="Ask Document">
-                <FileQuestion />
-                <span>Ask Document</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton isActive={activeTab === 'summarize'} onClick={() => handleTabChange('summarize')} tooltip="Summarize Document">
-                <FileText />
-                <span>Summarize Document</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton isActive={activeTab === 'translate'} onClick={() => handleTabChange('translate')} tooltip="Translate">
-                <MessageSquareQuote />
-                <span>Translate</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton isActive={activeTab === 'compliance'} onClick={() => handleTabChange('compliance')} tooltip="Compliance Checker">
-                <ShieldCheck />
-                <span>Compliance Checker</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton isActive={activeTab === 'risk'} onClick={() => handleTabChange('risk')} tooltip="Risk Detection">
-                <AlertTriangle />
-                <span>Risk Detection</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarContent>
-      </Sidebar>
-      <SidebarInset>
-        <div className="flex flex-col h-full">
+      <div className="flex h-full">
+        <Sidebar collapsible="icon" variant="sidebar">
+          <SidebarHeader>
+            <Logo />
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={activeTab === 'query'} onClick={() => handleTabChange('query')} tooltip="Query Policy">
+                  <FileSearch />
+                  <span>Query Policy</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={activeTab === 'improve'} onClick={() => handleTabChange('improve')} tooltip="Improve Policy">
+                  <Sparkles />
+                  <span>Improve Policy</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={activeTab === 'ask'} onClick={() => handleTabChange('ask')} tooltip="Ask Document">
+                  <FileQuestion />
+                  <span>Ask Document</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={activeTab === 'summarize'} onClick={() => handleTabChange('summarize')} tooltip="Summarize Document">
+                  <FileText />
+                  <span>Summarize Document</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={activeTab === 'translate'} onClick={() => handleTabChange('translate')} tooltip="Translate">
+                  <MessageSquareQuote />
+                  <span>Translate</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={activeTab === 'compliance'} onClick={() => handleTabChange('compliance')} tooltip="Compliance Checker">
+                  <ShieldCheck />
+                  <span>Compliance Checker</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={activeTab === 'risk'} onClick={() => handleTabChange('risk')} tooltip="Risk Detection">
+                  <AlertTriangle />
+                  <span>Risk Detection</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarContent>
+        </Sidebar>
+        <div className="flex flex-col flex-1">
           <header className="p-4 border-b flex justify-between items-center sticky top-0 bg-background/80 backdrop-blur-sm z-10">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="md:hidden" />
@@ -1654,14 +1654,14 @@ export default function Home() {
               </Button>
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-4 md:p-8">
-            <div className="grid md:grid-cols-2 gap-8">
+          <main className="flex-1 overflow-auto p-4 md:p-8 ai-background-advanced">
+            <div className="grid md:grid-cols-2 gap-8 h-full">
               <div className="flex flex-col gap-4">
                 {renderCurrentTab()}
               </div>
               <aside className="h-full">
-                <Card className="sticky top-28 h-[calc(100vh-8rem)]">
-                  <CardHeader>
+                <Card className="sticky top-28 h-[calc(100vh-8rem)] bg-transparent border-0 shadow-none">
+                  <CardHeader className="text-transparent">
                     <CardTitle>Results</CardTitle>
                     <CardDescription>
                       Your analysis will appear here.
@@ -1675,7 +1675,7 @@ export default function Home() {
             </div>
           </main>
         </div>
-      </SidebarInset>
+      </div>
     </TooltipProvider>
   );
 }
@@ -1683,10 +1683,10 @@ export default function Home() {
 const EmptyState = () => (
   <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 fade-in-up">
     <div className="relative flex items-center justify-center">
-      <div className="orb-container animate-orb-rotate">
-        <div className="orb-outer-glow animate-glow-pulse" />
+       <div className="orb-container animate-orb-rotate">
+        <div className="orb-outer animate-glow-pulse" />
+        <div className="orb-inner animate-orb-pulse" />
       </div>
-      <div className="orb-core animate-orb-pulse" />
       <Bot className="h-12 w-12 text-primary absolute" />
     </div>
     <h3 className="text-lg font-semibold text-foreground mt-8">Ready for Analysis</h3>
