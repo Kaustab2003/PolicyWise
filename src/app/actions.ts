@@ -18,6 +18,7 @@ import { generateSpeech, type GenerateSpeechOutput } from '@/ai/flows/generate-s
 import type { GenerateSummaryFromQueryInput, SuggestPolicyImprovementsInput, SummarizeDocumentInput, TranslateTextInput, ComplianceCheckInput, RiskDetectionInput, GenerateSpeechInput, AskDocumentInput } from './page';
 import { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import { AskDocumentOutput } from '@/ai/flows/ask-document';
+import pdf from 'pdf-parse';
 
 
 async function translate(text: string, targetLanguage: string): Promise<string> {
@@ -38,21 +39,21 @@ export async function parsePdfAction(
       throw new Error('Invalid PDF data URI');
     }
     
-    // Making a fetch call to the API route from a server action.
-    const apiUrl = new URL('/api/parse-pdf', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002');
-    const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dataUri }),
+    const base64Data = dataUri.split(',')[1];
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    // Use the built-in page-splitting capabilities of pdf-parse
+    const data = await pdf(buffer);
+
+    // `data.text` can have page breaks. We will make them more explicit for the AI.
+    // The form feed character ('\f') is a common page delimiter from pdf-parse.
+    const pages = data.text.split('\f'); 
+    let paginatedText = '';
+    pages.forEach((pageContent, i) => {
+        paginatedText += `--- Page ${i + 1} ---\n${pageContent.trim()}\n\n`;
     });
 
-    if (!response.ok) {
-        const errorResult = await response.json().catch(() => ({ error: `Server responded with ${response.status}` }));
-        throw new Error(errorResult.error || `Server responded with ${response.status}`);
-    }
-
-    const result = await response.json();
-    return { data: result.text, error: null };
+    return { data: paginatedText, error: null };
   } catch (e) {
     console.error('parsePdfAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
