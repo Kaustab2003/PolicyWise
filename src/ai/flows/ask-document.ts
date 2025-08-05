@@ -45,7 +45,7 @@ const prompt = ai.definePrompt({
   output: {schema: AskDocumentOutputSchema},
   prompt: `You are an AI assistant designed to answer questions based on the content of provided documents and images.
 
-Your task is to carefully analyze the documents/images and the user's questions. For each question, provide a clear, concise, and accurate answer derived solely from the information within the provided materials.
+Your task is to carefully analyze the documents/images and the user's questions. For each question, provide a clear, comprehensive, and accurate answer derived solely from the information within the provided materials.
 
 For each answer, you MUST identify which document or image was the primary source for your answer and set the 'sourceFile' field to the name of that file. If the answer is synthesized from multiple sources, pick the most relevant one.
 
