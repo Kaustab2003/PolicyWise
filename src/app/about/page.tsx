@@ -15,6 +15,7 @@ import {
   Mic,
   Languages,
   PanelLeft,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -140,10 +141,37 @@ export default function AboutPage() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-6">
                 <div className="p-3 bg-accent/10 rounded-lg">
-                  <MessageSquareQuote className="h-8 w-8 text-accent" />
+                  <FileText className="h-8 w-8 text-accent" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">
+                    Summarize Document
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Get a quick summary of any uploaded document.
+                  </p>
+                  <ol className="list-decimal list-inside mt-2 space-y-1">
+                    <li>
+                      Select "Summarize Document" from the sidebar.
+                    </li>
+                    <li>
+                      Click the "Select a file" button to upload a `.txt`, `.md`,
+                      or `.pdf` file.
+                    </li>
+                    <li>Click "Generate Summary".</li>
+                  </ol>
+                  <p className="mt-2 text-sm text-foreground/80">
+                    The AI will return a concise summary of the document's content in your selected language.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-6">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <MessageSquareQuote className="h-8 w-8 text-primary" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold mb-2">

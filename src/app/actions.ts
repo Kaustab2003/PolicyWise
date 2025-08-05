@@ -13,6 +13,7 @@ import {
   type AskDocumentOutput,
   type DocumentContext,
 } from '@/ai/flows/ask-document';
+import { summarizeDocument, type SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
 import { translateText, type TranslateTextOutput } from '@/ai/flows/translate-text';
 import { parsePdf } from '@/lib/pdf-parser';
 
@@ -23,6 +24,30 @@ async function translate(text: string, targetLanguage: string): Promise<string> 
   }
   const result = await translateText({ text, targetLanguage });
   return result.translatedText;
+}
+
+export async function summarizeDocumentAction(
+  documentContent: string,
+  language: string,
+): Promise<{ data: SummarizeDocumentOutput | null; error: string | null }> {
+  if (!documentContent) {
+    return { data: null, error: 'Document content is required.' };
+  }
+
+  try {
+    const result = await summarizeDocument({
+      documentContent,
+      targetLanguage: language,
+    });
+    return { data: result, error: null };
+  } catch (e) {
+    console.error('summarizeDocumentAction failed:', e);
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+    return {
+      data: null,
+      error: `Failed to summarize document: ${errorMessage}`,
+    };
+  }
 }
 
 export async function translateAction(

@@ -2,7 +2,7 @@
 
 import 'regenerator-runtime/runtime';
 import { useState, useRef, useEffect } from 'react';
-import { askDocumentAction, improveAction, summarizeAction, parsePdfAction, translateAction } from './actions';
+import { askDocumentAction, improveAction, summarizeAction, parsePdfAction, translateAction, summarizeDocumentAction } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -21,6 +21,7 @@ import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
 import type { AskDocumentOutput, DocumentContext } from '@/ai/flows/ask-document';
 import type { TranslateTextOutput } from '@/ai/flows/translate-text';
+import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
 import { LanguageSelector } from '@/components/language-selector';
 import { VoiceInput } from '@/components/voice-input';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
@@ -56,7 +57,7 @@ export default function Home() {
   const [currentQuery, setCurrentQuery] = useState('');
   const [queries, setQueries] = useState<string[]>(['Is accidental drop damage covered?']);
   
-  const [activeTab, setActiveTab] = useState<'query' | 'improve' | 'ask' | 'translate'>('query');
+  const [activeTab, setActiveTab] = useState<'query' | 'improve' | 'ask' | 'translate' | 'summarize'>('query');
   const [language, setLanguage] = useState('en');
 
   // State for document Q&A
@@ -69,6 +70,11 @@ export default function Home() {
   // State for translation
   const [textToTranslate, setTextToTranslate] = useState('');
   const [translationResult, setTranslationResult] = useState<TranslateTextOutput | null>(null);
+
+  // State for document summarization
+  const [summarizeFile, setSummarizeFile] = useState<DocumentContext | null>(null);
+  const [summarizeResult, setSummarizeResult] = useState<SummarizeDocumentOutput | null>(null);
+  const summarizeFileInputRef = useRef<HTMLInputElement>(null);
 
   const [summaryResult, setSummaryResult] =
     useState<GenerateSummaryFromQueryOutput | null>(null);
@@ -132,6 +138,46 @@ export default function Home() {
     });
   };
 
+  const processFile = async (file: File): Promise<DocumentContext | null> => {
+    const allowedTypes = ['text/', 'application/pdf', 'image/jpeg', 'image/png'];
+    if (!allowedTypes.some(type => file.type.startsWith(type))) {
+      toast({
+        variant: 'destructive',
+        title: 'Unsupported File Type',
+        description: `Skipping '${file.name}'. Please upload text, PDF, JPG, or PNG files.`,
+      });
+      return null;
+    }
+
+    try {
+      let fileContent: DocumentContext;
+      if (file.type.startsWith('image/')) {
+         const dataUri = await readFileAsDataURL(file);
+         fileContent = { name: file.name, content: dataUri };
+      } else if (file.type === 'application/pdf') {
+        const formData = new FormData();
+        formData.append('file', file);
+        const result = await parsePdfAction(formData);
+        if (result.error || !result.data) {
+          throw new Error(result.error || 'Failed to parse PDF.');
+        }
+        fileContent = { name: file.name, content: result.data.documentContent };
+      } else {
+        const textContent = await file.text();
+        fileContent = { name: file.name, content: textContent };
+      }
+      return fileContent;
+    } catch (error) {
+       console.error("Error processing file:", error);
+       toast({
+         variant: 'destructive',
+         title: 'File Processing Error',
+         description: error instanceof Error ? `Could not process ${file.name}: ${error.message}` : `Could not read or parse ${file.name}.`,
+       });
+       return null;
+    }
+  };
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
@@ -149,57 +195,47 @@ export default function Home() {
     setAskResult(null); // Clear previous results
 
     const newFiles: DocumentContext[] = [];
-    const allowedTypes = ['text/', 'application/pdf', 'image/jpeg', 'image/png'];
 
     for (const file of Array.from(files)) {
-      if (!allowedTypes.some(type => file.type.startsWith(type))) {
-        toast({
-          variant: 'destructive',
-          title: 'Unsupported File Type',
-          description: `Skipping '${file.name}'. Please upload text, PDF, JPG, or PNG files.`,
-        });
-        continue;
-      }
-      
-      try {
-        let fileContent: DocumentContext;
-        if (file.type.startsWith('image/')) {
-           const dataUri = await readFileAsDataURL(file);
-           fileContent = { name: file.name, content: dataUri };
-        } else if (file.type === 'application/pdf') {
-          const formData = new FormData();
-          formData.append('file', file);
-          const result = await parsePdfAction(formData);
-          if (result.error || !result.data) {
-            throw new Error(result.error || 'Failed to parse PDF.');
-          }
-          fileContent = { name: file.name, content: result.data.documentContent };
-        } else {
-          const textContent = await file.text();
-          fileContent = { name: file.name, content: textContent };
-        }
-        newFiles.push(fileContent);
-      } catch (error) {
-         console.error("Error processing file:", error);
-         toast({
-           variant: 'destructive',
-           title: 'File Processing Error',
-           description: error instanceof Error ? `Could not process ${file.name}: ${error.message}` : `Could not read or parse ${file.name}.`,
-         });
+      const processedFile = await processFile(file);
+      if (processedFile) {
+        newFiles.push(processedFile);
       }
     }
 
     setDocumentFiles(prevFiles => [...prevFiles, ...newFiles]);
     setIsLoading(false);
 
-    // Clear the file input so the same files can be re-uploaded if needed
     if(fileInputRef.current) {
         fileInputRef.current.value = '';
+    }
+  };
+  
+  const handleSummarizeFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    setSummarizeResult(null);
+
+    const processedFile = await processFile(file);
+    if (processedFile) {
+      setSummarizeFile(processedFile);
+    }
+    
+    setIsLoading(false);
+
+    if(summarizeFileInputRef.current) {
+      summarizeFileInputRef.current.value = '';
     }
   };
 
   const removeFile = (fileName: string) => {
     setDocumentFiles(files => files.filter(file => file.name !== fileName));
+  }
+  
+  const removeSummarizeFile = () => {
+    setSummarizeFile(null);
   }
 
   const handleAskDocument = async () => {
@@ -210,6 +246,7 @@ export default function Home() {
     setIsLoading(true);
     setSummaryResult(null);
     setImprovementResult(null);
+    setSummarizeResult(null);
     const result = await askDocumentAction(documentFiles, documentQueries, language);
     if (result.error) {
       toast({
@@ -232,6 +269,7 @@ export default function Home() {
     setIsLoading(true);
     setImprovementResult(null);
     setAskResult(null);
+    setSummarizeResult(null);
     const result = await summarizeAction(policy, queries, language);
     if (result.error) {
       toast({
@@ -250,6 +288,7 @@ export default function Home() {
     setIsLoading(true);
     setSummaryResult(null);
     setAskResult(null);
+    setSummarizeResult(null);
     const result = await improveAction(policy, language);
     if (result.error) {
       toast({
@@ -267,6 +306,7 @@ export default function Home() {
   const handleTranslate = async () => {
     setIsLoading(true);
     setTranslationResult(null);
+    setSummarizeResult(null);
     const result = await translateAction(textToTranslate, language);
     if (result.error) {
       toast({
@@ -277,6 +317,27 @@ export default function Home() {
       setTranslationResult(null);
     } else {
       setTranslationResult(result.data);
+    }
+    setIsLoading(false);
+  };
+
+  const handleSummarizeDocument = async () => {
+    if (!summarizeFile) return;
+    setIsLoading(true);
+    setAskResult(null);
+    setSummaryResult(null);
+    setImprovementResult(null);
+    setTranslationResult(null);
+    const result = await summarizeDocumentAction(summarizeFile.content, language);
+    if (result.error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: result.error,
+      });
+      setSummarizeResult(null);
+    } else {
+      setSummarizeResult(result.data);
     }
     setIsLoading(false);
   };
@@ -291,8 +352,29 @@ export default function Home() {
   };
 
   const renderResults = () => {
-    if (isLoading && !askResult && !summaryResult && !improvementResult && !translationResult) {
+    if (isLoading && !askResult && !summaryResult && !improvementResult && !translationResult && !summarizeResult) {
       return <ResultsSkeleton />;
+    }
+
+    if (activeTab === 'summarize' && summarizeResult) {
+      return (
+        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="text-primary" />
+              Document Summary
+            </CardTitle>
+            <CardDescription>
+              A concise summary of the document is below.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+              {summarizeResult.summary}
+            </div>
+          </CardContent>
+        </Card>
+      );
     }
 
     if (activeTab === 'translate' && translationResult) {
@@ -426,12 +508,14 @@ export default function Home() {
       emptyStateIcon = <MessageSquareQuote className="h-12 w-12 text-primary" />;
     } else if (activeTab === 'improve') {
       emptyStateIcon = <Sparkles className="h-12 w-12 text-primary" />;
+    } else if (activeTab === 'summarize') {
+      emptyStateIcon = <FileText className="h-12 w-12 text-primary" />;
     }
     return <EmptyState icon={emptyStateIcon} />;
   };
 
   const handleTabChange = (value: string) => {
-    setActiveTab(value as 'query' | 'improve' | 'ask' | 'translate');
+    setActiveTab(value as 'query' | 'improve' | 'ask' | 'translate' | 'summarize');
   };
 
   const renderCurrentTab = () => {
@@ -653,6 +737,67 @@ export default function Home() {
         </Card>
       )
     }
+
+    if (activeTab === 'summarize') {
+      return (
+        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          <CardHeader>
+            <CardTitle>Summarize a Document</CardTitle>
+            <CardDescription>
+              Upload a document to get a concise summary in your selected language.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="summarize-upload" className="font-semibold">Upload Document</label>
+              <Input
+                id="summarize-upload"
+                type="file"
+                ref={summarizeFileInputRef}
+                onChange={handleSummarizeFileChange}
+                className="hidden"
+                accept="text/*,application/pdf,.md,image/jpeg,image/png"
+                disabled={!!summarizeFile}
+              />
+              {!summarizeFile && (
+                <Button
+                  variant="outline"
+                  onClick={() => summarizeFileInputRef.current?.click()}
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  <UploadCloud className="mr-2" />
+                  {isLoading ? 'Processing...' : 'Select a file'}
+                </Button>
+              )}
+            </div>
+
+            {summarizeFile && (
+               <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Uploaded File:</p>
+                <div className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
+                  <div className="flex items-center gap-2 truncate">
+                    {summarizeFile.content.startsWith('data:image') ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
+                    <span className="truncate">{summarizeFile.name}</span>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={removeSummarizeFile}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            <Button
+              onClick={handleSummarizeDocument}
+              disabled={isLoading || !summarizeFile}
+              className={cn(commonButtonClasses, "bg-accent hover:bg-accent/90 text-accent-foreground")}
+            >
+              {isLoading && activeTab === 'summarize' ? 'Summarizing...' : <><BrainCircuit className="mr-2"/>Generate Summary</>}
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
     
     if (activeTab === 'translate') {
        return (
@@ -713,6 +858,12 @@ export default function Home() {
               <SidebarMenuButton isActive={activeTab === 'ask'} onClick={() => handleTabChange('ask')} tooltip="Ask Document">
                 <FileQuestion />
                 <span>Ask Document</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton isActive={activeTab === 'summarize'} onClick={() => handleTabChange('summarize')} tooltip="Summarize Document">
+                <FileText />
+                <span>Summarize Document</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
