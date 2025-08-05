@@ -395,7 +395,7 @@ export default function Home() {
             return { role: 'user', content: turn.questions.join('\n') };
         }
         if (turn.role === 'model' && turn.answers) {
-            return { role: 'model', content: turn.answers.map(a => a.answer).join('\n\n') };
+            return { role: 'model', content: turn.answers.map(a => a.summary).join('\n\n') };
         }
         // This case should ideally not be hit with valid ConversationTurn objects
         return {role: turn.role, content: ''};
@@ -926,42 +926,81 @@ export default function Home() {
                 {turn.role === 'model' && turn.answers && (
                   <div className="space-y-4">
                     {turn.answers.map((item, index) => (
-                      <div key={index} className="space-y-2">
-                        <h5 className="font-semibold">{item.question}</h5>
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <div className="flex justify-end mb-2">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-7 w-7"
-                                  onClick={() => handlePlayAudio(`${turn.id}-${index}`, item.answer)}
-                                  disabled={currentlyLoading !== null}
-                                >
-                                  {currentlyLoading === `${turn.id}-${index}` ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Volume2 className={cn("h-4 w-4", currentlyPlaying === `${turn.id}-${index}` && "text-primary")} />
-                                  )}
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Read aloud</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                          <p>{item.answer}</p>
-                          {item.sourceFile && (
-                            <div className="pt-2">
-                              <Badge variant="secondary">
-                                <FileText className="mr-1.5 h-3 w-3" />
-                                Source: {item.sourceFile}
-                              </Badge>
+                       <Card key={index} className="bg-muted/30">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                              <FileQuestion className="text-primary" />
+                              {item.question}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-6">
+                            {/* Direct Answer */}
+                            <div className="space-y-2">
+                              <p className="font-semibold text-primary">Answer</p>
+                              <p className="text-sm">{item.directAnswer}</p>
                             </div>
-                          )}
-                        </div>
-                      </div>
+
+                             {/* Summary */}
+                             <div className="space-y-2">
+                              <p className="font-semibold text-primary">Summary</p>
+                              <p className="text-sm prose dark:prose-invert max-w-none">{item.summary}</p>
+                            </div>
+
+                            {/* Key Points */}
+                            {item.keyPoints && item.keyPoints.length > 0 && (
+                              <div className="space-y-2">
+                                <p className="font-semibold text-primary">Key Points</p>
+                                <ul className="space-y-2 pl-4">
+                                  {item.keyPoints.map((point, pointIndex) => (
+                                    <li key={pointIndex} className="flex items-start gap-2">
+                                      <CheckCircle className="h-4 w-4 text-green-500 mt-1 shrink-0" />
+                                      <span className="text-sm">{point}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Confidence and Source */}
+                            <div className="flex justify-between items-center gap-4 text-sm pt-4 border-t border-border/50">
+                               <div className="space-y-2 flex-1">
+                                <div className="flex justify-between items-center text-xs text-muted-foreground font-semibold">
+                                  <span>Confidence Score</span>
+                                  <span>{Math.round(item.confidenceScore)}%</span>
+                                </div>
+                                <Progress value={item.confidenceScore} className="h-2" />
+                              </div>
+                              {item.sourceFile && (
+                                <Badge variant="secondary">
+                                  <FileText className="mr-1.5 h-3 w-3" />
+                                  Source: {item.sourceFile}
+                                </Badge>
+                              )}
+                            </div>
+                             <div className="flex justify-end">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-7 w-7"
+                                      onClick={() => handlePlayAudio(`${turn.id}-${index}`, item.summary)}
+                                      disabled={currentlyLoading !== null}
+                                    >
+                                      {currentlyLoading === `${turn.id}-${index}` ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Volume2 className={cn("h-4 w-4", currentlyPlaying === `${turn.id}-${index}` && "text-primary")} />
+                                      )}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Read summary aloud</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </div>
+                          </CardContent>
+                       </Card>
                     ))}
                   </div>
                 )}
