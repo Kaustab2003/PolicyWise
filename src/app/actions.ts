@@ -22,6 +22,7 @@ async function translate(text: string, targetLanguage: string): Promise<string> 
     // Avoids attempting to translate empty or english strings
     return text;
   }
+  // No try/catch here, as it will be handled by the calling action
   const result = await translateText({ text, targetLanguage });
   return result.translatedText;
 }
