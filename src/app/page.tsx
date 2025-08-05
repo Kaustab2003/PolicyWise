@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import 'regenerator-runtime/runtime';
@@ -293,15 +294,6 @@ export default function Home() {
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
-
-    if (documentFiles.length + files.length > 5) {
-      toast({
-        variant: 'destructive',
-        title: 'Upload Limit Exceeded',
-        description: 'You can upload a maximum of 5 files.',
-      });
-      return;
-    }
 
     setIsLoading(true);
     setAskHistory([]);
@@ -1284,6 +1276,7 @@ export default function Home() {
                 ref={riskFileInputRef}
                 onChange={handleRiskFileChange}
                 className="hidden"
+                accept="*"
               />
             {riskFile ? (
                <FileUploadDisplay file={riskFile} onRemove={removeRiskFile} onTriggerClick={() => riskFileInputRef.current?.click()} isLoading={isLoading} />
@@ -1331,6 +1324,7 @@ export default function Home() {
               ref={complianceFileInputRef}
               onChange={handleComplianceFileChange}
               className="hidden"
+              accept="*"
             />
             {complianceFile ? (
                <FileUploadDisplay file={complianceFile} onRemove={removeComplianceFile} onTriggerClick={() => complianceFileInputRef.current?.click()} isLoading={isLoading} />
@@ -1457,6 +1451,7 @@ export default function Home() {
                 ref={improveFileInputRef}
                 onChange={handleImproveFileChange}
                 className="hidden"
+                accept="*"
               />
             {improveFile ? (
                <FileUploadDisplay file={improveFile} onRemove={removeImproveFile} onTriggerClick={() => improveFileInputRef.current?.click()} isLoading={isLoading} />
@@ -1494,7 +1489,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle>Ask Document(s)</CardTitle>
             <CardDescription>
-              Upload up to 5 documents to have a conversation about their content.
+              Upload one or more documents to have a conversation about their content.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1507,16 +1502,16 @@ export default function Home() {
                 onChange={handleFileChange}
                 className="hidden"
                 multiple
-                disabled={documentFiles.length >= 5}
+                accept="*"
               />
               <Button
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full"
-                disabled={isLoading || documentFiles.length >= 5}
+                disabled={isLoading}
               >
                 <UploadCloud className="mr-2" />
-                {isLoading ? 'Processing...' : (documentFiles.length >= 5 ? 'Maximum files reached' : 'Select files (up to 5)')}
+                {isLoading ? 'Processing...' : 'Select files'}
               </Button>
             </div>
             {documentFiles.length > 0 && (
@@ -1614,6 +1609,7 @@ export default function Home() {
                 ref={summarizeFileInputRef}
                 onChange={handleSummarizeFileChange}
                 className="hidden"
+                accept="*"
               />
               {!summarizeFile && (
                 <Button
@@ -1838,4 +1834,5 @@ const ResultsSkeleton = () => (
     </Card>
   </div>
 );
+
 
