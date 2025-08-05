@@ -77,7 +77,7 @@ const ConversationTurnSchema = z.object({
 const AskDocumentInputSchema = z.object({
   documents: z.array(DocumentContextSchema).describe('An array of documents to search for an answer.'),
   history: z.array(ConversationTurnSchema.omit({id: true})).describe('The conversation history.'),
-  userQuery: z.string().describe('The latest user question.'),
+  userQueries: z.array(z.string()).describe('The latest user questions.'),
 });
 export type AskDocumentInput = z.infer<typeof AskDocumentInputSchema>;
 
@@ -141,12 +141,20 @@ export default function Home() {
     content: string;
   };
 
-  type ConversationTurn = z.infer<typeof ConversationTurnSchema>;
+  type Answer = NonNullable<AskDocumentOutput['answers']>[0];
+  type ConversationTurn = {
+    id: string;
+    role: 'user' | 'model';
+    questions?: string[];
+    answers?: Answer[];
+  };
 
   // State for document Q&A
   const [documentFiles, setDocumentFiles] = useState<DocumentContext[]>([]);
-  const [documentQuery, setDocumentQuery] = useState('');
+  const [askResult, setAskResult] = useState<AskDocumentOutput | null>(null);
   const [askHistory, setAskHistory] = useState<ConversationTurn[]>([]);
+  const [currentDocQuery, setCurrentDocQuery] = useState('');
+  const [docQueries, setDocQueries] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State for Improve Policy
@@ -213,7 +221,7 @@ export default function Home() {
       if (activeTab === 'query') {
         setCurrentQuery(transcript);
       } else if (activeTab === 'ask') {
-        setDocumentQuery(transcript);
+        setCurrentDocQuery(transcript);
       }
     }
   }, [transcript, activeTab]);
@@ -227,6 +235,17 @@ export default function Home() {
 
   const handleRemoveQuery = (index: number) => {
     setQueries(queries.filter((_, i) => i !== index));
+  };
+  
+  const handleAddDocQuery = () => {
+    if (currentDocQuery.trim() && !docQueries.includes(currentDocQuery.trim())) {
+      setDocQueries([...docQueries, currentDocQuery.trim()]);
+      setCurrentDocQuery('');
+    }
+  };
+
+  const handleRemoveDocQuery = (index: number) => {
+    setDocQueries(docQueries.filter((_, i) => i !== index));
   };
 
   const readFileAsDataURL = (file: File): Promise<string> => {
@@ -349,8 +368,8 @@ export default function Home() {
   const removeImproveFile = () => setImproveFile(null);
 
   const handleAskDocument = async () => {
-    if (documentQuery.trim() === '') {
-      toast({ variant: 'destructive', title: 'Error', description: 'Please enter a question.' });
+    if (docQueries.length === 0) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please enter at least one question.' });
       return;
     }
     setIsLoading(true);
@@ -360,16 +379,28 @@ export default function Home() {
     setSummarizeResult(null);
     setComplianceResult(null);
     setRiskResult(null);
+    setAskResult(null);
     
-    const userTurn: ConversationTurn = { id: crypto.randomUUID(), role: 'user', content: documentQuery };
+    // Create a new "user" turn in the history
+    const userTurn: ConversationTurn = { id: crypto.randomUUID(), role: 'user', questions: docQueries };
     const newHistory = [...askHistory, userTurn];
     setAskHistory(newHistory);
-    setDocumentQuery('');
+    setDocQueries([]); // Clear the query list
     
+    // Prepare the input for the AI action
     const input: AskDocumentInput = {
       documents: documentFiles.map(f => ({ name: f.name, content: f.content })),
-      history: askHistory.map(({id, ...rest}) => rest), // Omit id for the API call
-      userQuery: documentQuery,
+      history: askHistory.map(turn => {
+        // A bit of transformation to pass the right data to the action
+        if (turn.role === 'user' && turn.questions) {
+            return { role: 'user', content: turn.questions.join('\n') };
+        }
+        if (turn.role === 'model' && turn.answers) {
+            return { role: 'model', content: turn.answers.map(a => a.answer).join('\n\n') };
+        }
+        return {role: 'user', content: ''}; // Should not happen
+      }),
+      userQueries: docQueries,
     };
     
     const result = await askDocumentAction(input, language);
@@ -379,10 +410,12 @@ export default function Home() {
         title: 'Error',
         description: result.error,
       });
-      // Remove the user's query from history if there was an error
+      // Remove the user's turn from history if there was an error
       setAskHistory(prev => prev.slice(0, -1));
     } else if (result.data) {
-      const modelTurn: ConversationTurn = { id: crypto.randomUUID(), role: 'model', content: result.data.answer, sourceFile: result.data.sourceFile };
+      setAskResult(result.data); // Store the raw result
+      // Create a "model" turn with the answers
+      const modelTurn: ConversationTurn = { id: crypto.randomUUID(), role: 'model', answers: result.data.answers };
       setAskHistory(prev => [...prev, modelTurn]);
     }
     setIsLoading(false);
@@ -876,49 +909,70 @@ export default function Home() {
     if (activeTab === 'ask' && askHistory.length > 0) {
        return (
         <div className="space-y-4 fade-in-up">
-          {askHistory.map((turn, index) => (
+          {askHistory.map((turn) => (
             <div key={turn.id} className="flex gap-3">
               <div className="p-1.5 bg-muted rounded-full h-fit">
                 {turn.role === 'user' ? <User className="h-5 w-5 text-muted-foreground" /> : <Bot className="h-5 w-5 text-primary" />}
               </div>
               <div className="flex-1 space-y-2">
-                <div className="flex justify-between items-center">
-                   <h4 className="font-semibold capitalize">{turn.role}</h4>
-                    {turn.role === 'model' && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                           <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7"
-                            onClick={() => handlePlayAudio(turn.id, turn.content)}
-                            disabled={currentlyLoading !== null}
-                          >
-                            {currentlyLoading === turn.id ? (
-                               <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                               <Volume2 className={cn("h-4 w-4", currentlyPlaying === turn.id && "text-primary")} />
-                            )}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Read aloud</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                </div>
-                <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-                  {turn.content}
-                </div>
-                {turn.sourceFile && (
-                  <div className="pt-2">
-                    <Badge variant="secondary">
-                      <FileText className="mr-1.5 h-3 w-3" />
-                      Source: {turn.sourceFile}
-                    </Badge>
+                <h4 className="font-semibold capitalize">{turn.role}</h4>
+                {turn.role === 'user' && turn.questions && (
+                  <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+                    <ul className='list-disc pl-5'>
+                      {turn.questions.map((q, i) => <li key={i}>{q}</li>)}
+                    </ul>
                   </div>
                 )}
-                 {isLoading && index === askHistory.length - 1 && turn.role === 'user' && (
+                {turn.role === 'model' && turn.answers && (
+                  <Accordion type="single" collapsible className="w-full">
+                    {turn.answers.map((item, index) => (
+                      <AccordionItem value={`item-${index}`} key={index}>
+                        <AccordionTrigger className="text-left font-semibold hover:no-underline">
+                          <div className='flex items-center justify-between w-full'>
+                            <span className='truncate pr-4'>{item.question}</span>
+                            <div className="flex items-center">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7"
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // prevent accordion from toggling
+                                      handlePlayAudio(`${turn.id}-${index}`, item.answer);
+                                    }}
+                                    disabled={currentlyLoading !== null}
+                                  >
+                                    {currentlyLoading === `${turn.id}-${index}` ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Volume2 className={cn("h-4 w-4", currentlyPlaying === `${turn.id}-${index}` && "text-primary")} />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Read aloud</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="prose prose-sm dark:prose-invert max-w-none pt-2">
+                          <p>{item.answer}</p>
+                          {item.sourceFile && (
+                            <div className="pt-2">
+                              <Badge variant="secondary">
+                                <FileText className="mr-1.5 h-3 w-3" />
+                                Source: {item.sourceFile}
+                              </Badge>
+                            </div>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+                 {isLoading && turn.id === askHistory[askHistory.length - 1].id && turn.role === 'user' && (
                   <div className="flex items-center gap-2 text-muted-foreground text-sm pt-2">
                     <Bot className="h-5 w-5 animate-pulse" />
                     <span>Thinking...</span>
@@ -1441,20 +1495,23 @@ export default function Home() {
               {documentFiles.length > 0 && (
               <div className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <label htmlFor="doc-query" className="font-semibold">Your Question</label>
+                  <label htmlFor="doc-query" className="font-semibold">Your Question(s)</label>
                   <div className="flex gap-2">
                     <Input
                       id="doc-query"
-                      placeholder="Ask a follow-up question..."
-                      value={documentQuery}
-                      onChange={(e) => setDocumentQuery(e.target.value)}
+                      placeholder="Type a question..."
+                      value={currentDocQuery}
+                      onChange={(e) => setCurrentDocQuery(e.target.value)}
                        onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          handleAskDocument();
+                          handleAddDocQuery();
                         }
                       }}
                     />
+                    <Button variant="outline" onClick={handleAddDocQuery} aria-label="Add question">
+                      Add
+                    </Button>
                     {isClient && browserSupportsSpeechRecognition && (
                       <VoiceInput
                           onToggle={handleVoiceSearch}
@@ -1464,12 +1521,28 @@ export default function Home() {
                   </div>
                 </div>
 
+                {docQueries.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Added Questions:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {docQueries.map((q, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-1.5">
+                          {q}
+                          <button onClick={() => handleRemoveDocQuery(index)} className="rounded-full hover:bg-muted-foreground/20">
+                            <X className="h-3 w-3"/>
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <Button
                   onClick={handleAskDocument}
-                  disabled={isLoading || documentQuery.trim() === ''}
+                  disabled={isLoading || docQueries.length === 0}
                   className={cn(commonButtonClasses)}
                 >
-                  {isLoading ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
+                  {isLoading ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Questions</>}
                 </Button>
               </div>
             )}

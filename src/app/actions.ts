@@ -156,10 +156,10 @@ export async function askDocumentAction(
   askDocumentInput: AskDocumentInput,
   language: string,
 ): Promise<{ data: AskDocumentOutput | null; error: string | null }> {
-  if ((!askDocumentInput.documents || askDocumentInput.documents.length === 0) || !askDocumentInput.userQuery) {
+  if ((!askDocumentInput.documents || askDocumentInput.documents.length === 0) || !askDocumentInput.userQueries || askDocumentInput.userQueries.length === 0) {
     return {
       data: null,
-      error: 'At least one document and a user query are required.',
+      error: 'At least one document and at least one user query are required.',
     };
   }
 
@@ -170,18 +170,24 @@ export async function askDocumentAction(
         content: await translate(turn.content, 'en'),
       }))
     );
-    const translatedQuery = await translate(askDocumentInput.userQuery, 'en');
+    const translatedQueries = await Promise.all(askDocumentInput.userQueries.map(q => translate(q, 'en')));
 
     const result = await askDocument({
       ...askDocumentInput,
       history: translatedHistory,
-      userQuery: translatedQuery,
+      userQueries: translatedQueries,
     });
     
-    const translatedAnswer = await translate(result.answer, language);
-    const translatedSourceFile = result.sourceFile ? await translate(result.sourceFile, language) : undefined;
+    const translatedAnswers = await Promise.all(
+        result.answers.map(async (item) => ({
+            ...item,
+            question: await translate(item.question, language),
+            answer: await translate(item.answer, language),
+            sourceFile: item.sourceFile ? await translate(item.sourceFile, language) : undefined,
+        }))
+    );
     
-    return { data: { answer: translatedAnswer, sourceFile: translatedSourceFile }, error: null };
+    return { data: { answers: translatedAnswers }, error: null };
   } catch (e) {
     console.error('askDocumentAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';

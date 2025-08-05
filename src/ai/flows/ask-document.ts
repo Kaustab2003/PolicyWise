@@ -24,13 +24,18 @@ const ConversationTurnSchema = z.object({
 const AskDocumentInputSchema = z.object({
   documents: z.array(DocumentContextSchema).describe('An array of documents to search for an answer.'),
   history: z.array(ConversationTurnSchema).describe('The conversation history between the user and the model.'),
-  userQuery: z.string().describe('The latest user question related to the document.'),
+  userQueries: z.array(z.string()).describe('The latest user questions related to the document.'),
 });
 export type AskDocumentInput = z.infer<typeof AskDocumentInputSchema>;
 
-const AskDocumentOutputSchema = z.object({
+const AnswerSchema = z.object({
+    question: z.string().describe('The original user question.'),
     answer: z.string().describe('A comprehensive answer to the user query based on the document.'),
     sourceFile: z.string().optional().describe('The name of the file that contains the most relevant information for the answer.'),
+});
+
+const AskDocumentOutputSchema = z.object({
+  answers: z.array(AnswerSchema).describe('An array of answers, one for each user query.'),
 });
 export type AskDocumentOutput = z.infer<typeof AskDocumentOutputSchema>;
 
@@ -65,12 +70,14 @@ Content:
 
 Here is the conversation history. Use it to understand context for follow-up questions.
 {{#each history}}
-{{#if (this.role === "user")}}User: {{content}}{{/if}}
-{{#if (this.role === "model")}}AI: {{content}}{{/if}}
+{{#if (this.role.user)}}User: {{content}}{{/if}}
+{{#if (this.role.model)}}AI: {{content}}{{/if}}
 {{/each}}
 
-Based on the documents and the conversation history, please answer the following question:
-User: {{{userQuery}}}
+Based on the documents and the conversation history, please answer the following question(s):
+{{#each userQueries}}
+- {{{this}}}
+{{/each}}
 `,
 });
 
@@ -81,7 +88,15 @@ const askDocumentFlow = ai.defineFlow(
     outputSchema: AskDocumentOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
+     // Create a history that Handlebars can easily parse
+    const parsableHistory = input.history.map(turn => ({
+      ...turn,
+      role: {
+        [turn.role]: true,
+      }
+    }));
+    
+    const {output} = await prompt({...input, history: parsableHistory});
     return output!;
   }
 );
