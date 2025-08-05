@@ -107,4 +107,24 @@ body {
       transform: translateY(0);
     }
   }
+
+  .particle-background {
+    position: relative;
+    z-index: 0;
+  }
+  
+  .particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: hsl(280, 100%, 70%);
+    border-radius: 50%;
+    animation: float 6s ease-in-out infinite;
+    box-shadow: 0 0 10px currentColor;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.5; }
+    50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+  }
 }
