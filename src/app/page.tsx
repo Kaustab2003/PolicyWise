@@ -139,8 +139,7 @@ export default function Home() {
   };
 
   const processFile = async (file: File): Promise<DocumentContext | null> => {
-    const allowedMimeTypes = ['text/', 'application/pdf', 'image/jpeg', 'image/png'];
-    // For some reason, mac shows pdf as application/pdf but windows as text/pdf, so we check both.
+    const allowedMimeTypes = ['text/', 'application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
     const allowedFileExtensions = ['.txt', '.md', '.pdf', '.jpg', '.jpeg', '.png'];
     const fileExtension = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
 
@@ -158,10 +157,9 @@ export default function Home() {
     }
 
     try {
-      let fileContent: DocumentContext;
       if (file.type.startsWith('image/')) {
          const dataUri = await readFileAsDataURL(file);
-         fileContent = { name: file.name, content: dataUri };
+         return { name: file.name, content: dataUri };
       } else if (file.type === 'application/pdf' || fileExtension === '.pdf') {
         const formData = new FormData();
         formData.append('file', file);
@@ -169,12 +167,11 @@ export default function Home() {
         if (result.error || !result.data) {
           throw new Error(result.error || 'Failed to parse PDF.');
         }
-        fileContent = { name: file.name, content: result.data.documentContent };
+        return { name: file.name, content: result.data.documentContent };
       } else {
         const textContent = await file.text();
-        fileContent = { name: file.name, content: textContent };
+        return { name: file.name, content: textContent };
       }
-      return fileContent;
     } catch (error) {
        console.error("Error processing file:", error);
        toast({
@@ -654,7 +651,7 @@ export default function Home() {
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
-                accept="text/*,application/pdf,.md,image/jpeg,image/png"
+                accept="text/*,application/pdf,.md,image/jpeg,image/png,image/jpg"
                 multiple
                 disabled={documentFiles.length >= 5}
               />
@@ -764,7 +761,7 @@ export default function Home() {
                 ref={summarizeFileInputRef}
                 onChange={handleSummarizeFileChange}
                 className="hidden"
-                accept="text/*,application/pdf,.md,image/jpeg,image/png"
+                accept="text/*,application/pdf,.md,image/jpeg,image/png,image/jpg"
                 disabled={!!summarizeFile}
               />
               {!summarizeFile && (
@@ -965,3 +962,5 @@ const ResultsSkeleton = () => (
     </Card>
   </div>
 );
+
+    
