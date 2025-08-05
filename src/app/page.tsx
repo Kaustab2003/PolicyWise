@@ -148,6 +148,10 @@ export default function Home() {
   const [documentQuery, setDocumentQuery] = useState('');
   const [askHistory, setAskHistory] = useState<ConversationTurn[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // State for Improve Policy
+  const [improveFile, setImproveFile] = useState<DocumentContext | null>(null);
+  const improveFileInputRef = useRef<HTMLInputElement>(null);
   
   // State for translation
   const [textToTranslate, setTextToTranslate] = useState('');
@@ -332,6 +336,7 @@ export default function Home() {
   const handleSummarizeFileChange = createSingleFileHandler(setSummarizeFile, setSummarizeResult, summarizeFileInputRef);
   const handleComplianceFileChange = createSingleFileHandler(setComplianceFile, setComplianceResult, complianceFileInputRef);
   const handleRiskFileChange = createSingleFileHandler(setRiskFile, setRiskResult, riskFileInputRef);
+  const handleImproveFileChange = createSingleFileHandler(setImproveFile, setImprovementResult, improveFileInputRef);
 
 
   const removeFile = (fileName: string) => {
@@ -341,6 +346,7 @@ export default function Home() {
   const removeSummarizeFile = () => setSummarizeFile(null);
   const removeComplianceFile = () => setComplianceFile(null);
   const removeRiskFile = () => setRiskFile(null);
+  const removeImproveFile = () => setImproveFile(null);
 
   const handleAskDocument = async () => {
     if (documentQuery.trim() === '') {
@@ -412,6 +418,8 @@ export default function Home() {
   };
 
   const handleImprove = async () => {
+    const document = improveFile?.content || policy;
+    if (!document) return;
     setIsLoading(true);
     setSummaryResult(null);
     setAskHistory([]);
@@ -419,7 +427,7 @@ export default function Home() {
     setSummarizeResult(null);
     setComplianceResult(null);
     setRiskResult(null);
-    const result = await improveAction({ policyDocument: policy }, language);
+    const result = await improveAction({ policyDocument: document }, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -1358,19 +1366,35 @@ export default function Home() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="policy-doc-improve" className="font-semibold">Policy Document</label>
-              <Textarea
-                id="policy-doc-improve"
-                placeholder="Paste your policy draft here..."
-                className="min-h-[350px] font-code text-xs"
-                value={policy}
-                onChange={(e) => setPolicy(e.target.value)}
+             <Input
+                id="improve-file-upload"
+                type="file"
+                ref={improveFileInputRef}
+                onChange={handleImproveFileChange}
+                className="hidden"
+                accept=".txt,.md,.pdf,.jpg,.jpeg,.png"
               />
-            </div>
+            {improveFile ? (
+               <FileUploadDisplay file={improveFile} onRemove={removeImproveFile} onTriggerClick={() => improveFileInputRef.current?.click()} isLoading={isLoading} />
+            ) : (
+              <div className="space-y-2">
+                <label htmlFor="policy-doc-improve" className="font-semibold">Policy Document</label>
+                <Textarea
+                  id="policy-doc-improve"
+                  placeholder="Paste your policy draft here..."
+                  className="min-h-[350px] font-code text-xs"
+                  value={policy}
+                  onChange={(e) => setPolicy(e.target.value)}
+                />
+                 <Button variant="outline" className="w-full" onClick={() => improveFileInputRef.current?.click()} disabled={isLoading}>
+                  <FileUp className="mr-2" />
+                  {isLoading ? 'Processing...' : 'Or Upload a File'}
+                </Button>
+              </div>
+            )}
             <Button
               onClick={handleImprove}
-              disabled={isLoading || !policy}
+              disabled={isLoading || (!policy && !improveFile)}
               className={cn(commonButtonClasses, "bg-accent hover:bg-accent/90 text-accent-foreground")}
             >
               {isLoading && activeTab === 'improve' ? 'Improving...' : <><Sparkles className="mr-2" />Suggest Improvements</>}

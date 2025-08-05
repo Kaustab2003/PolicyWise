@@ -14,7 +14,7 @@ import {z} from 'genkit';
 const SuggestPolicyImprovementsInputSchema = z.object({
   policyDocument: z
     .string()
-    .describe('The draft policy document to be reviewed.'),
+    .describe('The draft policy document to be reviewed, as a string or a data URI.'),
 });
 export type SuggestPolicyImprovementsInput = z.infer<typeof SuggestPolicyImprovementsInputSchema>;
 
@@ -50,7 +50,7 @@ The report should be structured to be as helpful and clear as possible. It must 
 Review the policy for clarity, completeness, fairness, and enforceability, based on common industry standards and best practices.
 
 Policy Document:
-{{{policyDocument}}}`,
+{{media url=policyDocument}}`,
 });
 
 const suggestPolicyImprovementsFlow = ai.defineFlow(
