@@ -4,8 +4,8 @@ import { Worker } from 'worker_threads';
 import path from 'path';
 
 // Construct an absolute path to the worker script.
-// This is more reliable in a server environment than relative paths or module imports.
-const workerPath = path.resolve(process.cwd(), 'src/lib/pdf-parser-worker.ts');
+// This path points to the compiled JS file within the .next directory.
+const workerPath = path.resolve(process.cwd(), '.next/server/app/lib/pdf-parser-worker.js');
 
 
 export async function parsePdf(base64Data: string): Promise<string> {
