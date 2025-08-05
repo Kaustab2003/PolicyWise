@@ -2,7 +2,7 @@
 
 import 'regenerator-runtime/runtime';
 import { useState, useRef, useEffect } from 'react';
-import { askDocumentAction, improveAction, summarizeAction, parsePdfAction, translateAction } from './actions';
+import { askDocumentAction, improveAction, summarizeAction, parsePdfAction } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,11 +15,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
-import type { AskDocumentOutput } from '@/ai/flows/ask-document';
+import type { AskDocumentOutput, DocumentContext } from '@/ai/flows/ask-document';
 import type { TranslateTextOutput } from '@/ai/flows/translate-text';
 import { LanguageSelector } from '@/components/language-selector';
 import { VoiceInput } from '@/components/voice-input';
@@ -30,6 +30,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { translateAction } from './actions';
 
 const defaultPolicy = `## TechGadget Pro - 1-Year Limited Warranty
 
@@ -48,11 +49,6 @@ e) to a Product that has been modified to alter functionality or capability with
 If a defect arises and a valid claim is received by TechGadget within the Warranty Period, TechGadget will, at its option and to the extent permitted by law, either (1) repair the Product at no charge, using new or refurbished replacement parts or (2) exchange the Product with a new or refurbished Product.
 `;
 
-type DocumentFile = {
-  name: string;
-  content: string;
-}
-
 export default function Home() {
   const [policy, setPolicy] = useState(defaultPolicy);
   const [query, setQuery] = useState('Is accidental drop damage covered?');
@@ -60,7 +56,7 @@ export default function Home() {
   const [language, setLanguage] = useState('en');
 
   // State for document Q&A
-  const [documentFiles, setDocumentFiles] = useState<DocumentFile[]>([]);
+  const [documentFiles, setDocumentFiles] = useState<DocumentContext[]>([]);
   const [documentQuery, setDocumentQuery] = useState('');
   const [askResult, setAskResult] = useState<AskDocumentOutput | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -99,6 +95,15 @@ export default function Home() {
     }
   }, [transcript, activeTab]);
 
+  const readFileAsDataURL = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
@@ -115,32 +120,37 @@ export default function Home() {
     setIsLoading(true);
     setAskResult(null); // Clear previous results
 
-    const newFiles: DocumentFile[] = [];
+    const newFiles: DocumentContext[] = [];
+    const allowedTypes = ['text/', 'application/pdf', 'image/jpeg', 'image/png'];
 
     for (const file of Array.from(files)) {
-      if (!file.type.startsWith('text/') && file.type !== 'application/pdf') {
+      if (!allowedTypes.some(type => file.type.startsWith(type))) {
         toast({
           variant: 'destructive',
           title: 'Unsupported File Type',
-          description: `Skipping '${file.name}'. Please upload text or PDF files.`,
+          description: `Skipping '${file.name}'. Please upload text, PDF, JPG, or PNG files.`,
         });
         continue;
       }
       
       try {
-        let textContent = '';
-        if (file.type === 'application/pdf') {
+        let fileContent: DocumentContext;
+        if (file.type.startsWith('image/')) {
+           const dataUri = await readFileAsDataURL(file);
+           fileContent = { name: file.name, content: dataUri };
+        } else if (file.type === 'application/pdf') {
           const formData = new FormData();
           formData.append('file', file);
           const result = await parsePdfAction(formData);
           if (result.error || !result.data) {
             throw new Error(result.error || 'Failed to parse PDF.');
           }
-          textContent = result.data.documentContent;
+          fileContent = { name: file.name, content: result.data.documentContent };
         } else {
-          textContent = await file.text();
+          const textContent = await file.text();
+          fileContent = { name: file.name, content: textContent };
         }
-        newFiles.push({ name: file.name, content: textContent });
+        newFiles.push(fileContent);
       } catch (error) {
          console.error("Error processing file:", error);
          toast({
@@ -483,7 +493,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle>Ask Document(s)</CardTitle>
             <CardDescription>
-              Upload up to 5 documents to get AI-powered answers from their content.
+              Upload up to 5 documents (text, pdf, images) to get AI-powered answers from their content.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -495,7 +505,7 @@ export default function Home() {
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
-                accept="text/*,application/pdf,.md"
+                accept="text/*,application/pdf,.md,image/jpeg,image/png"
                 multiple
                 disabled={documentFiles.length >= 5}
               />
@@ -516,7 +526,7 @@ export default function Home() {
                   {documentFiles.map((file) => (
                     <div key={file.name} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
                       <div className="flex items-center gap-2 truncate">
-                        <FileText className="h-4 w-4 shrink-0" />
+                        {file.content.startsWith('data:image') ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
                         <span className="truncate">{file.name}</span>
                       </div>
                       <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeFile(file.name)}>

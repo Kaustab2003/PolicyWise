@@ -12,7 +12,7 @@ import {z} from 'genkit';
 
 const DocumentContextSchema = z.object({
   name: z.string().describe('The name of the document file.'),
-  content: z.string().describe('The full text content of the document.'),
+  content: z.string().describe("The full text content of the document, or a base64-encoded data URI for images (e.g., 'data:image/jpeg;base64,...')."),
 });
 export type DocumentContext = z.infer<typeof DocumentContextSchema>;
 
@@ -43,20 +43,24 @@ const prompt = ai.definePrompt({
   name: 'askDocumentPrompt',
   input: {schema: AskDocumentInputSchema},
   output: {schema: AskDocumentOutputSchema},
-  prompt: `You are an AI assistant designed to answer questions based on the content of provided documents.
+  prompt: `You are an AI assistant designed to answer questions based on the content of provided documents and images.
 
-Your task is to carefully analyze the documents and the user's question. Provide a clear, concise, and accurate answer derived solely from the information within the documents.
+Your task is to carefully analyze the documents/images and the user's question. Provide a clear, concise, and accurate answer derived solely from the information within the provided materials.
 
-After providing the answer, you MUST identify which document was the primary source for your answer and set the 'sourceFile' field to the name of that document. If the answer is synthesized from multiple documents, pick the most relevant one.
+After providing the answer, you MUST identify which document or image was the primary source for your answer and set the 'sourceFile' field to the name of that file. If the answer is synthesized from multiple sources, pick the most relevant one.
 
-If the question is predictive or asks for an inference, base your prediction only on the evidence available in the text. Clearly state that your answer is an inference based on the provided content.
+If the question is predictive or asks for an inference, base your prediction only on the evidence available in the text/images. Clearly state that your answer is an inference based on the provided content.
 
 If no document contains the information needed to answer the question, state that clearly and do not set a 'sourceFile'. Do not use any external knowledge.
 
 {{#each documents}}
 Document Name: {{{name}}}
 Content:
+{{#if (content.startsWith "data:image")}}
+{{media url=content}}
+{{else}}
 {{{content}}}
+{{/if}}
 ---
 {{/each}}
 
