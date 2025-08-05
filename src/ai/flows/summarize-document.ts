@@ -14,7 +14,7 @@ const SummarizeDocumentInputSchema = z.object({
   documentContent: z
     .string()
     .describe(
-      "The text content or a base64-encoded data URI of an image to be summarized."
+      'The text content or a base64-encoded data URI of an image to be summarized.'
     ),
   targetLanguage: z
     .string()
@@ -39,7 +39,7 @@ export async function summarizeDocument(
 
 const prompt = ai.definePrompt({
   name: 'summarizeDocumentPrompt',
-  input: {schema: SummarizeDocumentInputSchema},
+  input: {schema: z.any()},
   output: {schema: SummarizeDocumentOutputSchema},
   prompt: `You are an expert at summarizing documents. Analyze the following document content and provide a concise summary.
 
@@ -48,11 +48,7 @@ The summary should capture the key points and main ideas of the document.
 Generate the summary in the language with the ISO 639-1 code: "{{targetLanguage}}".
 
 Document Content:
-{{#if (documentContent.startsWith "data:image")}}
-{{media url=documentContent}}
-{{else}}
-{{{documentContent}}}
-{{/if}}`,
+{{{documentContent}}}`,
 });
 
 const summarizeDocumentFlow = ai.defineFlow(
@@ -62,7 +58,19 @@ const summarizeDocumentFlow = ai.defineFlow(
     outputSchema: SummarizeDocumentOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
+    let promptInput: any;
+    if (input.documentContent.startsWith('data:image')) {
+      promptInput = {
+        targetLanguage: input.targetLanguage,
+        documentContent: {media: {url: input.documentContent}},
+      };
+    } else {
+      promptInput = {
+        targetLanguage: input.targetLanguage,
+        documentContent: input.documentContent,
+      };
+    }
+    const {output} = await prompt(promptInput);
     return output!;
   }
 );
