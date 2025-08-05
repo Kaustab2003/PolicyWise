@@ -15,7 +15,11 @@ export async function parsePdf(base64Data: string): Promise<string> {
     // crash-prone pdf-parse library from the main server thread. If pdf-parse
     // encounters a file that causes a catastrophic failure, it will crash the
     // worker thread, which we can handle here, instead of crashing the entire server.
-    const worker = new Worker(workerPath);
+    const worker = new Worker(workerPath, {
+        workerData: {
+            buffer: buffer
+        }
+    });
 
     worker.on('message', (result: { success: boolean; text?: string; error?: string }) => {
       if (result.success) {
@@ -38,8 +42,5 @@ export async function parsePdf(base64Data: string): Promise<string> {
         reject(new Error(`PDF parsing worker stopped with exit code ${code}. This may be due to a corrupt or excessively large/complex PDF.`));
       }
     });
-
-    // Post the buffer to the worker.
-    worker.postMessage(buffer);
   });
 }

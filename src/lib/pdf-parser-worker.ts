@@ -1,5 +1,5 @@
 
-import { parentPort } from 'worker_threads';
+import { parentPort, workerData } from 'worker_threads';
 import pdf from 'pdf-parse';
 
 if (!parentPort) {
@@ -28,22 +28,23 @@ const options = {
   }
 };
 
+const processPdf = async (bufferData: Buffer) => {
+    try {
+        const data = await pdf(bufferData, options);
 
-parentPort.on('message', async (bufferData: Buffer) => {
-  try {
-    const data = await pdf(bufferData, options);
+        // `data.text` will now have page breaks. We will make them more explicit for the AI.
+        const pages = data.text.split('\f'); // Form feed character is the page delimiter
+        let paginatedText = '';
+        for (let i = 0; i < pages.length; i++) {
+            paginatedText += `--- Page ${i + 1} ---\n${pages[i].trim()}\n\n`;
+        }
 
-    // `data.text` will now have page breaks. We will make them more explicit for the AI.
-    const pages = data.text.split('\f'); // Form feed character is the page delimiter
-    let paginatedText = '';
-    for (let i = 0; i < pages.length; i++) {
-        paginatedText += `--- Page ${i + 1} ---\n${pages[i].trim()}\n\n`;
+        parentPort!.postMessage({ success: true, text: paginatedText });
+    } catch (error) {
+        // We can't post the full error object, as it's not always cloneable.
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during parsing.';
+        parentPort!.postMessage({ success: false, error: `PDF parsing failed in worker: ${errorMessage}` });
     }
+}
 
-    parentPort.postMessage({ success: true, text: paginatedText });
-  } catch (error) {
-    // We can't post the full error object, as it's not always cloneable.
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during parsing.';
-    parentPort.postMessage({ success: false, error: `PDF parsing failed in worker: ${errorMessage}` });
-  }
-});
+processPdf(workerData.buffer);
