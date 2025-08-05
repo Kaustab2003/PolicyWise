@@ -13,7 +13,9 @@ import {z} from 'genkit';
 const SummarizeDocumentInputSchema = z.object({
   documentContent: z
     .string()
-    .describe('The text content of the document to be summarized.'),
+    .describe(
+      "The text content or a base64-encoded data URI of an image to be summarized."
+    ),
   targetLanguage: z
     .string()
     .describe('The target language for the summary (e.g., "es", "fr", "hi").'),
@@ -46,7 +48,11 @@ The summary should capture the key points and main ideas of the document.
 Generate the summary in the language with the ISO 639-1 code: "{{targetLanguage}}".
 
 Document Content:
-{{{documentContent}}}`,
+{{#if (documentContent.startsWith "data:image")}}
+{{media url=documentContent}}
+{{else}}
+{{{documentContent}}}
+{{/if}}`,
 });
 
 const summarizeDocumentFlow = ai.defineFlow(
