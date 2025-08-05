@@ -140,43 +140,44 @@ export default function Home() {
     });
   };
 
-  const processFile = async (file: File): Promise<DocumentContext | null> => {
+  const processFile = async (
+    file: File
+  ): Promise<{ file?: DocumentContext; error?: string }> => {
     const allowedFileExtensions = ['.txt', '.md', '.pdf', '.jpg', '.jpeg', '.png'];
     const fileExtension = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
-
+  
     if (!allowedFileExtensions.includes(fileExtension)) {
-      toast({
-        variant: 'destructive',
-        title: 'Unsupported File Type',
-        description: `Skipping '${file.name}'. Please upload text, PDF, JPG, or PNG files.`,
-      });
-      return null;
+      return {
+        error: `Skipping '${file.name}'. Please upload text, PDF, JPG, or PNG files.`,
+      };
     }
-
+  
     try {
       if (file.type.startsWith('image/')) {
-         const dataUri = await readFileAsDataURL(file);
-         return { name: file.name, content: dataUri };
+        const dataUri = await readFileAsDataURL(file);
+        return { file: { name: file.name, content: dataUri } };
       } else if (fileExtension === '.pdf') {
         const formData = new FormData();
         formData.append('file', file);
         const result = await parsePdfAction(formData);
         if (result.error || !result.data) {
-          throw new Error(result.error || 'Failed to parse PDF.');
+          // Return the error instead of throwing it
+          return { error: result.error || 'Failed to parse PDF.' };
         }
-        return { name: file.name, content: result.data.documentContent };
+        return {
+          file: { name: file.name, content: result.data.documentContent },
+        };
       } else {
         const textContent = await file.text();
-        return { name: file.name, content: textContent };
+        return { file: { name: file.name, content: textContent } };
       }
     } catch (error) {
-       console.error("Error processing file:", error);
-       toast({
-         variant: 'destructive',
-         title: 'File Processing Error',
-         description: error instanceof Error ? `Could not process ${file.name}: ${error.message}` : `Could not read or parse ${file.name}.`,
-       });
-       return null;
+      console.error('Error processing file:', error);
+      const errorMessage =
+        error instanceof Error
+          ? `Could not process ${file.name}: ${error.message}`
+          : `Could not read or parse ${file.name}.`;
+      return { error: errorMessage };
     }
   };
 
@@ -199,9 +200,15 @@ export default function Home() {
     const newFiles: DocumentContext[] = [];
 
     for (const file of Array.from(files)) {
-      const processedFile = await processFile(file);
-      if (processedFile) {
-        newFiles.push(processedFile);
+      const result = await processFile(file);
+      if (result.file) {
+        newFiles.push(result.file);
+      } else if (result.error) {
+        toast({
+          variant: 'destructive',
+          title: 'File Processing Error',
+          description: result.error,
+        });
       }
     }
 
@@ -221,10 +228,16 @@ export default function Home() {
     setSummarizeResult(null);
     setSummarizeFile(null);
 
-    const processedFile = await processFile(file);
+    const result = await processFile(file);
     
-    if (processedFile) {
-      setSummarizeFile(processedFile);
+    if (result.file) {
+      setSummarizeFile(result.file);
+    } else if (result.error) {
+       toast({
+         variant: 'destructive',
+         title: 'File Processing Error',
+         description: result.error,
+       });
     }
     
     setIsLoading(false);
