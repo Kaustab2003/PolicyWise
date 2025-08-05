@@ -30,6 +30,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 
 const defaultPolicy = `## TechGadget Pro - 1-Year Limited Warranty
 
@@ -732,6 +733,7 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-4">
               <LanguageSelector value={language} onValueChange={setLanguage} />
+              <ThemeSwitcher />
               <Button variant="ghost" asChild>
                 <Link href="/about">About</Link>
               </Button>
