@@ -15,11 +15,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX, FileUp, Replace } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX, FileUp, Replace, Check, ChevronsUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
-import type { AskDocumentOutput, DocumentContext } from '@/ai/flows/ask-document';
+import type { AskDocumentOutput } from '@/ai/flows/ask-document';
 import type { TranslateTextOutput } from '@/ai/flows/translate-text';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
 import type { ComplianceCheckOutput } from '@/ai/flows/compliance-checker';
@@ -43,6 +43,9 @@ import {
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+
 
 export const maxDuration = 120;
 
@@ -72,6 +75,12 @@ export default function Home() {
   
   const [activeTab, setActiveTab] = useState<'query' | 'improve' | 'ask' | 'translate' | 'summarize' | 'compliance' | 'risk'>('query');
   const [language, setLanguage] = useState('en');
+
+  // DocumentContext can be shared across components that need it
+  type DocumentContext = {
+    name: string;
+    content: string;
+  };
 
   // State for document Q&A
   const [documentFiles, setDocumentFiles] = useState<DocumentContext[]>([]);
@@ -663,7 +672,7 @@ export default function Home() {
                 Document Summary
               </CardTitle>
               <CardDescription>
-                A concise summary of the document is below.
+                A detailed summary of the document is below.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -906,6 +915,69 @@ export default function Home() {
     setActiveTab(value as 'query' | 'improve' | 'ask' | 'translate' | 'summarize' | 'compliance' | 'risk');
   };
 
+  const complianceStandards = [
+    { value: 'GDPR', label: 'GDPR (General Data Protection Regulation)' },
+    { value: 'HIPAA', label: 'HIPAA (Health Insurance Portability and Accountability Act)' },
+    { value: 'CCPA', label: 'CCPA (California Consumer Privacy Act)' },
+    { value: 'PCI DSS', label: 'PCI DSS (Payment Card Industry Data Security Standard)' },
+    { value: 'SOX', label: 'SOX (Sarbanes-Oxley Act)' },
+    { value: 'ISO 27001', label: 'ISO/IEC 27001' },
+  ];
+
+  const ComplianceStandardCombobox = () => {
+    const [open, setOpen] = useState(false);
+  
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between"
+          >
+            <span className="truncate">
+              {complianceStandards.find((s) => s.value.toLowerCase() === complianceStandard.toLowerCase())?.label || complianceStandard || "Select a standard..."}
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+          <Command>
+            <CommandInput 
+              placeholder="Search or type custom standard..."
+              value={complianceStandard}
+              onValueChange={setComplianceStandard}
+            />
+            <CommandList>
+              <CommandEmpty>No standard found.</CommandEmpty>
+              <CommandGroup>
+                {complianceStandards.map((standard) => (
+                  <CommandItem
+                    key={standard.value}
+                    value={standard.value}
+                    onSelect={(currentValue) => {
+                      setComplianceStandard(currentValue.toUpperCase());
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        complianceStandard.toLowerCase() === standard.value.toLowerCase() ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {standard.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
   const renderCurrentTab = () => {
     const commonButtonClasses = "w-full transition-all transform hover:scale-105 hover:brightness-110 hover:saturate-125 active:scale-100";
 
@@ -1023,12 +1095,7 @@ export default function Home() {
             )}
             <div className="space-y-2">
               <label htmlFor="compliance-standard" className="font-semibold">Compliance Standard</label>
-              <Input
-                id="compliance-standard"
-                placeholder="e.g., GDPR, HIPAA"
-                value={complianceStandard}
-                onChange={(e) => setComplianceStandard(e.target.value)}
-              />
+               <ComplianceStandardCombobox />
             </div>
             <Button
               onClick={handleComplianceCheck}
