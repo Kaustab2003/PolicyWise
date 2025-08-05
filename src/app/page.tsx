@@ -1661,9 +1661,9 @@ export default function Home() {
               </div>
               <aside className="h-full">
                 <Card className="sticky top-28 h-[calc(100vh-8rem)] bg-transparent border-0 shadow-none">
-                  <CardHeader className="text-transparent">
-                    <CardTitle>Results</CardTitle>
-                    <CardDescription>
+                  <CardHeader className="text-foreground">
+                    <CardTitle className="text-foreground">Results</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                       Your analysis will appear here.
                     </CardDescription>
                   </CardHeader>
