@@ -116,42 +116,88 @@ body {
     }
   }
 
-  .ai-background {
+  .particle-background {
     position: fixed;
     inset: 0;
     z-index: -10;
-    background: radial-gradient(circle at center, 
-      hsl(280, 100%, 15%) 0%,
-      hsl(260, 80%, 8%) 40%,
-      hsl(240, 90%, 5%) 100%
-    );
     overflow: hidden;
   }
   
-  .glowing-orb {
+  .particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: hsl(280, 100%, 70%);
+    border-radius: 50%;
+    animation: float 6s ease-in-out infinite;
+    box-shadow: 0 0 10px currentColor;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.5; }
+    50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+  }
+
+  .ai-background-advanced {
+    background: 
+      radial-gradient(ellipse 800px 600px at center, 
+        hsl(280, 50%, 20%) 0%,
+        transparent 50%
+      ),
+      linear-gradient(135deg, 
+        hsl(260, 80%, 8%) 0%,
+        hsl(280, 60%, 5%) 50%,
+        hsl(240, 90%, 3%) 100%
+      );
+  }
+
+  .orb-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .orb-outer {
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle,
+      hsla(280, 100%, 60%, 0.3) 0%,
+      hsla(260, 80%, 50%, 0.2) 40%,
+      transparent 70%
+    );
+    filter: blur(2px);
+    animation: pulse 4s ease-in-out infinite, rotate 15s linear infinite;
+  }
+
+  .orb-inner {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 200px;
-    height: 200px;
+    width: 150px;
+    height: 150px;
     background: radial-gradient(circle,
-      hsl(280, 100%, 70%) 0%,
-      hsl(260, 80%, 50%) 30%,
-      hsl(240, 60%, 30%) 70%,
-      transparent 100%
+      hsl(290, 100%, 75%) 0%,
+      hsl(270, 90%, 55%) 50%,
+      hsl(250, 70%, 35%) 100%
     );
     border-radius: 50%;
-    filter: blur(1px);
     box-shadow: 
-      0 0 50px hsl(280, 100%, 60%),
-      0 0 100px hsl(260, 80%, 50%),
-      inset 0 0 50px hsl(280, 100%, 40%);
-    animation: pulse 3s ease-in-out infinite;
+      0 0 30px hsl(280, 100%, 60%),
+      inset 0 0 20px hsl(290, 100%, 50%);
+    animation: pulse 3s ease-in-out infinite reverse;
   }
 
   @keyframes pulse {
-    0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
-    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+  }
+  
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 }

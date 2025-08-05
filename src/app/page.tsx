@@ -1676,7 +1676,7 @@ export default function Home() {
                 {renderCurrentTab()}
               </div>
               <aside className="h-full">
-                <Card className="sticky top-28 h-[calc(100vh-8rem)]">
+                <Card className="sticky top-28 h-[calc(100vh-8rem)] ai-background-advanced">
                   <CardHeader>
                     <CardTitle>Results</CardTitle>
                     <CardDescription>
@@ -1698,10 +1698,11 @@ export default function Home() {
 
 const EmptyState = ({ icon }: { icon: React.ReactNode }) => (
   <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 fade-in-up">
-    <div className="p-4 rounded-full bg-muted mb-4">
-      {icon}
+    <div className="orb-container">
+      <div className="orb-outer" />
+      <div className="orb-inner" />
     </div>
-    <h3 className="text-lg font-semibold text-foreground">Ready for Analysis</h3>
+    <h3 className="text-lg font-semibold text-foreground mt-8">Ready for Analysis</h3>
     <p className="mt-1">
       Your results will be displayed here once you submit an item for analysis.
     </p>
