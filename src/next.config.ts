@@ -18,11 +18,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-   webpack: (config, { isServer, buildId }) => {
-    // This is to ensure our worker file is bundled correctly by Next.js/Webpack.
-    if (isServer) {
-        config.entry['pdf-parser-worker'] = './src/lib/pdf-parser-worker.ts';
-    }
+  webpack: (config, { isServer }) => {
+    config.module.rules.push({
+      test: /pdf-parser-worker\.ts$/,
+      type: 'asset/resource',
+      generator: {
+        filename: 'static/chunks/[hash].[ext]',
+        publicPath: '/_next/',
+      }
+    });
+
     return config;
   },
   experimental: {

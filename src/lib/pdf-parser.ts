@@ -1,12 +1,7 @@
 'use server';
 
 import { Worker } from 'worker_threads';
-import path from 'path';
-
-// Note: In a Next.js server environment, we need to construct the path 
-// to our worker file. The bundled worker file will be in the same directory
-// as this bundled file.
-const workerPath = path.resolve(__dirname, 'pdf-parser-worker.js');
+import workerUrl from './pdf-parser-worker';
 
 export async function parsePdf(base64Data: string): Promise<string> {
   const buffer = Buffer.from(base64Data, 'base64');
@@ -15,7 +10,7 @@ export async function parsePdf(base64Data: string): Promise<string> {
     // crash-prone pdf-parse library from the main server thread. If pdf-parse
     // encounters a file that causes a catastrophic failure, it will crash the
     // worker thread, which we can handle here, instead of crashing the entire server.
-    const worker = new Worker(workerPath);
+    const worker = new Worker(workerUrl);
 
     worker.on('message', (result: { success: boolean; text?: string; error?: string }) => {
       if (result.success) {
