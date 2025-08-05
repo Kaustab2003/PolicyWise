@@ -17,34 +17,16 @@ export async function POST(req: Request) {
     const base64Data = dataUri.split(',')[1];
     const buffer = Buffer.from(base64Data, 'base64');
     
-    // Options to get page-by-page text
-    const options = {
-      pagerender: (pageData: any) => {
-        return pageData.getTextContent()
-          .then((textContent: any) => {
-            let lastY = 0;
-            let text = '';
-            for (let item of textContent.items) {
-              if (lastY == item.transform[5] || !lastY) {
-                text += item.str;
-              } else {
-                text += '\n' + item.str;
-              }
-              lastY = item.transform[5];
-            }
-            return text;
-          });
-      }
-    };
-
-    const data = await pdf(buffer, options);
+    // Remove the fragile pagerender option and rely on the default text extraction.
+    const data = await pdf(buffer);
 
     // `data.text` will now have page breaks. We will make them more explicit for the AI.
-    const pages = data.text.split('\f'); // Form feed character is the page delimiter
+    // The form feed character ('\f') is the default page delimiter from pdf-parse.
+    const pages = data.text.split('\f'); 
     let paginatedText = '';
-    for (let i = 0; i < pages.length; i++) {
-        paginatedText += `--- Page ${i + 1} ---\n${pages[i].trim()}\n\n`;
-    }
+    pages.forEach((pageContent, i) => {
+        paginatedText += `--- Page ${i + 1} ---\n${pageContent.trim()}\n\n`;
+    });
 
     return NextResponse.json({text: paginatedText});
   } catch (error) {
