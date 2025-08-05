@@ -1,7 +1,12 @@
 'use server';
 
 import { Worker } from 'worker_threads';
-import workerUrl from './pdf-parser-worker';
+import path from 'path';
+
+// Construct an absolute path to the worker script.
+// This is more reliable in a server environment than relative paths or module imports.
+const workerPath = path.resolve(process.cwd(), 'src/lib/pdf-parser-worker.ts');
+
 
 export async function parsePdf(base64Data: string): Promise<string> {
   const buffer = Buffer.from(base64Data, 'base64');
@@ -10,7 +15,7 @@ export async function parsePdf(base64Data: string): Promise<string> {
     // crash-prone pdf-parse library from the main server thread. If pdf-parse
     // encounters a file that causes a catastrophic failure, it will crash the
     // worker thread, which we can handle here, instead of crashing the entire server.
-    const worker = new Worker(workerUrl);
+    const worker = new Worker(workerPath);
 
     worker.on('message', (result: { success: boolean; text?: string; error?: string }) => {
       if (result.success) {
@@ -34,7 +39,7 @@ export async function parsePdf(base64Data: string): Promise<string> {
       }
     });
 
-    // Post the buffer to the worker. Note: we are not transferring it, just posting it.
+    // Post the buffer to the worker.
     worker.postMessage(buffer);
   });
 }

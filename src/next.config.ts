@@ -18,18 +18,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
-    config.module.rules.push({
-      test: /pdf-parser-worker\.ts$/,
-      type: 'asset/resource',
-      generator: {
-        filename: 'static/chunks/[hash].[ext]',
-        publicPath: '/_next/',
-      }
-    });
-
-    return config;
-  },
   experimental: {
     serverComponentsExternalPackages: ['pdf-parse'],
   },
