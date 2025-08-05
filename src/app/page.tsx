@@ -2,7 +2,7 @@
 
 import 'regenerator-runtime/runtime';
 import { useState, useRef, useEffect } from 'react';
-import { askDocumentAction, improveAction, summarizeAction, translateAction, summarizeDocumentAction, complianceCheckAction, riskDetectionAction, generateSpeechAction } from './actions';
+import { askDocumentAction, improveAction, summarizeAction, translateAction, summarizeDocumentAction, complianceCheckAction, riskDetectionAction, generateSpeechAction, parsePdfAction } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -47,7 +47,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { z } from 'zod';
-import { parsePdf } from '@/lib/pdf-parser';
 
 
 export const maxDuration = 120;
@@ -273,16 +272,24 @@ export default function Home() {
   
     try {
       const dataUri = await readFileAsDataURL(file);
-
-      // If it's a PDF, parse it to text.
+      
+      // If it's a PDF, parse it to text on the server.
       if (file.type === 'application/pdf') {
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const textContent = await parsePdf(buffer);
+        const result = await parsePdfAction(dataUri);
+        if (result.error || !result.data) {
+          throw new Error(result.error || 'Failed to parse PDF.');
+        }
         // We store the parsed text in `content` and keep the original Data URI for other uses if needed.
-        return { file: { name: file.name, content: textContent, originalContent: dataUri } };
+        return { file: { name: file.name, content: result.data, originalContent: dataUri } };
+      }
+      
+      // For other text files, read them as text.
+      if (file.type === 'text/plain' || file.type === 'text/markdown') {
+        const textContent = await file.text();
+        return { file: { name: file.name, content: textContent } };
       }
 
+      // For images, just return the data URI.
       return { file: { name: file.name, content: dataUri } };
     } catch (error) {
       console.error('Error processing file:', error);
@@ -953,7 +960,9 @@ export default function Home() {
                               <FileQuestion className="text-primary" />
                               {item.question}
                             </CardTitle>
-                             <div className="flex justify-end -mt-4">
+                          </CardHeader>
+                          <CardContent className="space-y-6">
+                            <div className="flex justify-end -mt-2">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Button
@@ -975,8 +984,6 @@ export default function Home() {
                                   </TooltipContent>
                                 </Tooltip>
                               </div>
-                          </CardHeader>
-                          <CardContent className="space-y-6">
                             {/* Direct Answer */}
                             <div className="space-y-2">
                               <p className="font-semibold text-primary">Answer</p>

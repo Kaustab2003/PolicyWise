@@ -7,7 +7,8 @@ import path from 'path';
 // to our worker file from the current working directory.
 const workerPath = path.resolve(process.cwd(), '.next/server/app/lib/pdf-parser-worker.js');
 
-export async function parsePdf(buffer: Buffer): Promise<string> {
+export async function parsePdf(base64Data: string): Promise<string> {
+  const buffer = Buffer.from(base64Data, 'base64');
   return new Promise((resolve, reject) => {
     // The reason we use a worker is to isolate the memory-intensive and potentially
     // crash-prone pdf-parse library from the main server thread. If pdf-parse
