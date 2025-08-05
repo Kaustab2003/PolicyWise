@@ -16,20 +16,21 @@ const DocumentContextSchema = z.object({
 });
 export type DocumentContext = z.infer<typeof DocumentContextSchema>;
 
+const ConversationTurnSchema = z.object({
+  role: z.enum(['user', 'model']),
+  content: z.string(),
+});
+
 const AskDocumentInputSchema = z.object({
   documents: z.array(DocumentContextSchema).describe('An array of documents to search for an answer.'),
-  userQueries: z.array(z.string()).describe('The user questions related to the document.'),
+  history: z.array(ConversationTurnSchema).describe('The conversation history between the user and the model.'),
+  userQuery: z.string().describe('The latest user question related to the document.'),
 });
 export type AskDocumentInput = z.infer<typeof AskDocumentInputSchema>;
 
-const AnswerSchema = z.object({
-    question: z.string().describe('The original user question.'),
+const AskDocumentOutputSchema = z.object({
     answer: z.string().describe('A comprehensive answer to the user query based on the document.'),
     sourceFile: z.string().optional().describe('The name of the file that contains the most relevant information for the answer.'),
-});
-
-const AskDocumentOutputSchema = z.object({
-  answers: z.array(AnswerSchema).describe('An array of answers, one for each user query.'),
 });
 export type AskDocumentOutput = z.infer<typeof AskDocumentOutputSchema>;
 
@@ -45,25 +46,32 @@ const prompt = ai.definePrompt({
   output: {schema: AskDocumentOutputSchema},
   prompt: `You are an AI assistant designed to answer questions based on the content of provided documents and images.
 
-Your task is to carefully analyze the documents/images and the user's questions. For each question, provide a clear, comprehensive, and accurate answer derived solely from the information within the provided materials.
+Your task is to carefully analyze the documents/images and the user's questions, including the conversation history. For each question, provide a clear, comprehensive, and accurate answer derived solely from the information within the provided materials.
 
 For each answer, you MUST identify which document or image was the primary source for your answer and set the 'sourceFile' field to the name of that file. If the answer is synthesized from multiple sources, pick the most relevant one.
 
-If no document contains the information needed to answer a question, state that clearly in the answer for that question and do not set a 'sourceFile'. Do not use any external knowledge.
+If no document contains the information needed to answer a question, state that clearly in the answer and do not set a 'sourceFile'. Do not use any external knowledge.
 
-Respond with an array of answer objects, one for each user question.
-
+{{#if documents}}
+Here are the documents to reference:
 {{#each documents}}
+---
 Document Name: {{{name}}}
 Content:
 {{media url=content}}
 ---
 {{/each}}
+{{/if}}
 
-User Questions:
-{{#each userQueries}}
-- {{{this}}}
-{{/each}}`,
+Here is the conversation history. Use it to understand context for follow-up questions.
+{{#each history}}
+{{#if (eq role 'user')}}User: {{content}}{{/if}}
+{{#if (eq role 'model')}}AI: {{content}}{{/if}}
+{{/each}}
+
+Based on the documents and the conversation history, please answer the following question:
+User: {{{userQuery}}}
+`,
 });
 
 const askDocumentFlow = ai.defineFlow(

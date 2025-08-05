@@ -15,15 +15,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX, FileUp, Replace, Check, ChevronsUpDown } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX, FileUp, Replace, Check, ChevronsUpDown, User, UserCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { GenerateSummaryFromQueryInput, GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
-import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
-import type { AskDocumentInput, AskDocumentOutput, DocumentContext as AskDocumentContext } from '@/ai/flows/ask-document';
+import type { GenerateSummaryFromQueryOutput, ImprovementSuggestion, SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
+import type { AskDocumentOutput } from '@/ai/flows/ask-document';
 import type { TranslateTextOutput } from '@/ai/flows/translate-text';
-import type { SummarizeDocumentOutput, SummarizeDocumentInput } from '@/ai/flows/summarize-document';
-import type { ComplianceCheckOutput, ComplianceCheckInput } from '@/ai/flows/compliance-checker';
-import type { RiskDetectionOutput, RiskDetectionInput } from '@/ai/flows/risk-detection';
+import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
+import type { ComplianceCheckOutput, ComplianceItem } from '@/ai/flows/compliance-checker';
+import type { RiskDetectionOutput, RiskItem } from '@/ai/flows/risk-detection';
 import { LanguageSelector } from '@/components/language-selector';
 import { VoiceInput } from '@/components/voice-input';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
@@ -45,9 +44,62 @@ import html2canvas from 'html2canvas';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { z } from 'zod';
 
 
 export const maxDuration = 120;
+
+// Zod Schemas for input validation, moved from AI flows
+const SuggestPolicyImprovementsInputSchema = z.object({
+  policyDocument: z.string().describe("The draft policy document to be reviewed."),
+});
+export type SuggestPolicyImprovementsInput = z.infer<typeof SuggestPolicyImprovementsInputSchema>;
+
+const GenerateSummaryFromQueryInputSchema = z.object({
+  policyDocument: z.string().describe('The content of the policy document.'),
+  userQueries: z.array(z.string()).describe('The user queries related to the policy document.'),
+  clauseClassifications: z.string().describe('Clause classifications extracted from the document.'),
+});
+export type GenerateSummaryFromQueryInput = z.infer<typeof GenerateSummaryFromQueryInputSchema>;
+
+const DocumentContextSchema = z.object({
+  name: z.string().describe('The name of the document file.'),
+  content: z.string().describe("A data URI representing the document content (e.g., 'data:image/jpeg;base64,...' or 'data:application/pdf;base64,...')."),
+});
+const ConversationTurnSchema = z.object({
+  role: z.enum(['user', 'model']),
+  content: z.string(),
+  sourceFile: z.string().optional(),
+});
+const AskDocumentInputSchema = z.object({
+  documents: z.array(DocumentContextSchema).describe('An array of documents to search for an answer.'),
+  history: z.array(ConversationTurnSchema).describe('The conversation history.'),
+  userQuery: z.string().describe('The latest user question.'),
+});
+export type AskDocumentInput = z.infer<typeof AskDocumentInputSchema>;
+
+const TranslateTextInputSchema = z.object({
+  text: z.string().describe('The text to be translated.'),
+  targetLanguage: z.string().describe('The target language code (e.g., "es", "fr", "hi").'),
+});
+export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
+
+const SummarizeDocumentInputSchema = z.object({
+  documentContent: z.string().describe("A data URI representing the document content."),
+  targetLanguage: z.string().describe('The target language for the summary (e.g., "es", "fr", "hi").'),
+});
+export type SummarizeDocumentInput = z.infer<typeof SummarizeDocumentInputSchema>;
+
+const ComplianceCheckInputSchema = z.object({
+  policyDocument: z.string().describe("The policy document to be checked."),
+  complianceStandard: z.string().describe('The compliance standard to check against.'),
+});
+export type ComplianceCheckInput = z.infer<typeof ComplianceCheckInputSchema>;
+
+const RiskDetectionInputSchema = z.object({
+  policyDocument: z.string().describe("The policy document to be analyzed for risks."),
+});
+export type RiskDetectionInput = z.infer<typeof RiskDetectionInputSchema>;
 
 const defaultPolicy = `## TechGadget Pro - 1-Year Limited Warranty
 
@@ -81,11 +133,12 @@ export default function Home() {
     content: string;
   };
 
+  type ConversationTurn = z.infer<typeof ConversationTurnSchema>;
+
   // State for document Q&A
   const [documentFiles, setDocumentFiles] = useState<DocumentContext[]>([]);
-  const [currentDocumentQuery, setCurrentDocumentQuery] = useState('');
-  const [documentQueries, setDocumentQueries] = useState<string[]>([]);
-  const [askResult, setAskResult] = useState<AskDocumentOutput | null>(null);
+  const [documentQuery, setDocumentQuery] = useState('');
+  const [askHistory, setAskHistory] = useState<ConversationTurn[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // State for translation
@@ -134,7 +187,7 @@ export default function Home() {
       if (activeTab === 'query') {
         setCurrentQuery(transcript);
       } else if (activeTab === 'ask') {
-        setCurrentDocumentQuery(transcript);
+        setDocumentQuery(transcript);
       }
     }
   }, [transcript, activeTab]);
@@ -148,17 +201,6 @@ export default function Home() {
 
   const handleRemoveQuery = (index: number) => {
     setQueries(queries.filter((_, i) => i !== index));
-  };
-  
-  const handleAddDocumentQuery = () => {
-    if (currentDocumentQuery.trim() && !documentQueries.includes(currentDocumentQuery.trim())) {
-      setDocumentQueries([...documentQueries, currentDocumentQuery.trim()]);
-      setCurrentDocumentQuery('');
-    }
-  };
-
-  const handleRemoveDocumentQuery = (index: number) => {
-    setDocumentQueries(documentQueries.filter((_, i) => i !== index));
   };
 
   const readFileAsDataURL = (file: File): Promise<string> => {
@@ -209,7 +251,7 @@ export default function Home() {
     }
 
     setIsLoading(true);
-    setAskResult(null); // Clear previous results
+    setAskHistory([]);
 
     const newFiles: DocumentContext[] = [];
 
@@ -279,8 +321,8 @@ export default function Home() {
   const removeRiskFile = () => setRiskFile(null);
 
   const handleAskDocument = async () => {
-    if (documentQueries.length === 0) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Please add at least one question.' });
+    if (documentQuery.trim() === '') {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please enter a question.' });
       return;
     }
     setIsLoading(true);
@@ -291,9 +333,15 @@ export default function Home() {
     setComplianceResult(null);
     setRiskResult(null);
     
+    const currentTurn: ConversationTurn = { role: 'user', content: documentQuery };
+    const newHistory = [...askHistory, currentTurn];
+    setAskHistory(newHistory);
+    setDocumentQuery('');
+    
     const input: AskDocumentInput = {
       documents: documentFiles.map(f => ({ name: f.name, content: f.content })),
-      userQueries: documentQueries,
+      history: askHistory,
+      userQuery: documentQuery,
     };
     
     const result = await askDocumentAction(input, language);
@@ -303,9 +351,11 @@ export default function Home() {
         title: 'Error',
         description: result.error,
       });
-      setAskResult(null);
-    } else {
-      setAskResult(result.data);
+      // Remove the user's query from history if there was an error
+      setAskHistory(prev => prev.slice(0, -1));
+    } else if (result.data) {
+      const modelTurn: ConversationTurn = { role: 'model', content: result.data.answer, sourceFile: result.data.sourceFile };
+      setAskHistory(prev => [...prev, modelTurn]);
     }
     setIsLoading(false);
   };
@@ -313,7 +363,7 @@ export default function Home() {
   const handleSummarize = async () => {
     setIsLoading(true);
     setImprovementResult(null);
-    setAskResult(null);
+    setAskHistory([]);
     setTranslationResult(null);
     setSummarizeResult(null);
     setComplianceResult(null);
@@ -322,7 +372,7 @@ export default function Home() {
     const input: GenerateSummaryFromQueryInput = {
       policyDocument: policy,
       userQueries: queries,
-      clauseClassifications: '' // This will be provided on the server
+      clauseClassifications: 'Coverage, Exclusion, Limit, Definition, Service'
     };
 
     const result = await summarizeAction(input, language);
@@ -342,7 +392,7 @@ export default function Home() {
   const handleImprove = async () => {
     setIsLoading(true);
     setSummaryResult(null);
-    setAskResult(null);
+    setAskHistory([]);
     setTranslationResult(null);
     setSummarizeResult(null);
     setComplianceResult(null);
@@ -365,7 +415,7 @@ export default function Home() {
     setIsLoading(true);
     setSummaryResult(null);
     setImprovementResult(null);
-    setAskResult(null);
+    setAskHistory([]);
     setSummarizeResult(null);
     setComplianceResult(null);
     setRiskResult(null);
@@ -386,7 +436,7 @@ export default function Home() {
   const handleSummarizeDocument = async () => {
     if (!summarizeFile) return;
     setIsLoading(true);
-    setAskResult(null);
+    setAskHistory([]);
     setSummaryResult(null);
     setImprovementResult(null);
     setTranslationResult(null);
@@ -419,7 +469,7 @@ export default function Home() {
     setIsLoading(true);
     setSummaryResult(null);
     setImprovementResult(null);
-    setAskResult(null);
+    setAskHistory([]);
     setTranslationResult(null);
     setSummarizeResult(null);
     setRiskResult(null);
@@ -450,7 +500,7 @@ export default function Home() {
     setIsLoading(true);
     setSummaryResult(null);
     setImprovementResult(null);
-    setAskResult(null);
+    setAskHistory([]);
     setTranslationResult(null);
     setSummarizeResult(null);
     setComplianceResult(null);
@@ -580,7 +630,7 @@ export default function Home() {
 
 
   const renderResults = () => {
-    if (isLoading && !askResult && !summaryResult && !improvementResult && !translationResult && !summarizeResult && !complianceResult && !riskResult) {
+    if (isLoading && askHistory.length === 0 && !summaryResult && !improvementResult && !translationResult && !summarizeResult && !complianceResult && !riskResult) {
       return <ResultsSkeleton />;
     }
 
@@ -754,31 +804,35 @@ export default function Home() {
       )
     }
 
-    if (activeTab === 'ask' && askResult) {
+    if (activeTab === 'ask' && askHistory.length > 0) {
        return (
-        <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
-          {askResult.answers.map((item, index) => (
-             <Card key={index}>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <FileQuestion className="text-primary" />
-                      {item.question}
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-                    {item.answer}
+        <div className="space-y-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          {askHistory.map((turn, index) => (
+            <div key={index} className="flex gap-3">
+              <div className="p-1.5 bg-muted rounded-full h-fit">
+                {turn.role === 'user' ? <User className="h-5 w-5 text-muted-foreground" /> : <Bot className="h-5 w-5 text-primary" />}
+              </div>
+              <div className="flex-1 space-y-2">
+                <h4 className="font-semibold capitalize">{turn.role}</h4>
+                <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+                  {turn.content}
+                </div>
+                {turn.sourceFile && (
+                  <div className="pt-2">
+                    <Badge variant="secondary">
+                      <FileText className="mr-1.5 h-3 w-3" />
+                      Source: {turn.sourceFile}
+                    </Badge>
                   </div>
-                  {item.sourceFile && (
-                    <div className="pt-2">
-                      <Badge variant="secondary">
-                        <FileText className="mr-1.5 h-3 w-3" />
-                        Source: {item.sourceFile}
-                      </Badge>
-                    </div>
-                  )}
-                </CardContent>
-             </Card>
+                )}
+                 {isLoading && index === askHistory.length - 1 && turn.role === 'user' && (
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm pt-2">
+                    <Bot className="h-5 w-5 animate-pulse" />
+                    <span>Thinking...</span>
+                  </div>
+                 )}
+              </div>
+            </div>
           ))}
         </div>
       );
@@ -1247,7 +1301,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle>Ask Document(s)</CardTitle>
             <CardDescription>
-              Upload up to 5 documents (text, pdf, images) to get AI-powered answers from their content.
+              Upload up to 5 documents to have a conversation about their content.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1292,25 +1346,22 @@ export default function Home() {
               </div>
             )}
               {documentFiles.length > 0 && (
-              <>
+              <div className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <label htmlFor="doc-query" className="font-semibold">Your Questions</label>
+                  <label htmlFor="doc-query" className="font-semibold">Your Question</label>
                   <div className="flex gap-2">
                     <Input
                       id="doc-query"
-                      placeholder="Type a question..."
-                      value={currentDocumentQuery}
-                      onChange={(e) => setCurrentDocumentQuery(e.target.value)}
+                      placeholder="Ask a follow-up question..."
+                      value={documentQuery}
+                      onChange={(e) => setDocumentQuery(e.target.value)}
                        onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          handleAddDocumentQuery();
+                          handleAskDocument();
                         }
                       }}
                     />
-                    <Button variant="outline" onClick={handleAddDocumentQuery} aria-label="Add question">
-                      Add
-                    </Button>
                     {isClient && browserSupportsSpeechRecognition && (
                       <VoiceInput
                           onToggle={handleVoiceSearch}
@@ -1320,31 +1371,14 @@ export default function Home() {
                   </div>
                 </div>
 
-                {documentQueries.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">Added Questions:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {documentQueries.map((q, index) => (
-                        <Badge key={index} variant="secondary" className="flex items-center gap-1.5">
-                          {q}
-                           <button onClick={() => handleRemoveDocumentQuery(index)} className="rounded-full hover:bg-muted-foreground/20">
-                            <X className="h-3 w-3"/>
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-
                 <Button
                   onClick={handleAskDocument}
-                  disabled={isLoading || documentQueries.length === 0}
+                  disabled={isLoading || documentQuery.trim() === ''}
                   className={cn(commonButtonClasses, "bg-primary hover:bg-primary/90 text-primary-foreground")}
                 >
-                  {isLoading && activeTab === 'ask' ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Questions</>}
+                  {isLoading ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
                 </Button>
-              </>
+              </div>
             )}
           </CardContent>
         </Card>

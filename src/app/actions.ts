@@ -3,22 +3,21 @@
 import {
   generateSummaryFromQuery,
   type GenerateSummaryFromQueryOutput,
-  type GenerateSummaryFromQueryInput,
 } from '@/ai/flows/generate-summary-from-query';
 import {
   suggestPolicyImprovements,
   type SuggestPolicyImprovementsOutput,
-  type SuggestPolicyImprovementsInput,
 } from '@/ai/flows/suggest-policy-improvements';
 import {
   askDocument,
   type AskDocumentOutput,
   type AskDocumentInput,
 } from '@/ai/flows/ask-document';
-import { summarizeDocument, type SummarizeDocumentOutput, type SummarizeDocumentInput } from '@/ai/flows/summarize-document';
-import { translateText, type TranslateTextOutput, type TranslateTextInput } from '@/ai/flows/translate-text';
-import { complianceCheck, type ComplianceCheckOutput, type ComplianceCheckInput } from '@/ai/flows/compliance-checker';
-import { riskDetection, type RiskDetectionOutput, type RiskDetectionInput } from '@/ai/flows/risk-detection';
+import { summarizeDocument, type SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
+import { translateText, type TranslateTextOutput } from '@/ai/flows/translate-text';
+import { complianceCheck, type ComplianceCheckOutput } from '@/ai/flows/compliance-checker';
+import { riskDetection, type RiskDetectionOutput } from '@/ai/flows/risk-detection';
+import type { GenerateSummaryFromQueryInput, SuggestPolicyImprovementsInput, SummarizeDocumentInput, TranslateTextInput, ComplianceCheckInput, RiskDetectionInput } from './page';
 
 
 async function translate(text: string, targetLanguage: string): Promise<string> {
@@ -138,30 +137,32 @@ export async function askDocumentAction(
   askDocumentInput: AskDocumentInput,
   language: string,
 ): Promise<{ data: AskDocumentOutput | null; error: string | null }> {
-  if (!askDocumentInput.documents || askDocumentInput.documents.length === 0 || !askDocumentInput.userQueries || askDocumentInput.userQueries.length === 0) {
+  if ((!askDocumentInput.documents || askDocumentInput.documents.length === 0) || !askDocumentInput.userQuery) {
     return {
       data: null,
-      error: 'Documents and at least one user query are required.',
+      error: 'At least one document and a user query are required.',
     };
   }
 
   try {
-    const translatedQueries = await Promise.all(askDocumentInput.userQueries.map(query => translate(query, 'en')));
+    const translatedHistory = await Promise.all(
+      askDocumentInput.history.map(async (turn) => ({
+        ...turn,
+        content: await translate(turn.content, 'en'),
+      }))
+    );
+    const translatedQuery = await translate(askDocumentInput.userQuery, 'en');
+
     const result = await askDocument({
       ...askDocumentInput,
-      userQueries: translatedQueries,
+      history: translatedHistory,
+      userQuery: translatedQuery,
     });
     
-    const translatedAnswers = await Promise.all(
-        result.answers.map(async (item) => ({
-            ...item,
-            question: await translate(item.question, language),
-            answer: await translate(item.answer, language),
-            sourceFile: item.sourceFile ? await translate(item.sourceFile, language) : undefined,
-        }))
-    );
-
-    return { data: { answers: translatedAnswers }, error: null };
+    const translatedAnswer = await translate(result.answer, language);
+    const translatedSourceFile = result.sourceFile ? await translate(result.sourceFile, language) : undefined;
+    
+    return { data: { answer: translatedAnswer, sourceFile: translatedSourceFile }, error: null };
   } catch (e) {
     console.error('askDocumentAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
