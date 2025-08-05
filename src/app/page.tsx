@@ -1,3 +1,4 @@
+
 'use client';
 
 import 'regenerator-runtime/runtime';
@@ -262,25 +263,22 @@ export default function Home() {
     file: File
   ): Promise<{ file?: DocumentContext; error?: string }> => {
     try {
-      const dataUri = await readFileAsDataURL(file);
-      
-      // If it's a PDF, parse it to text on the server.
       if (file.type === 'application/pdf') {
+        const dataUri = await readFileAsDataURL(file);
         const result = await parsePdfAction(dataUri);
         if (result.error || !result.data) {
           throw new Error(result.error || 'Failed to parse PDF.');
         }
-        // We store the parsed text in `content` and keep the original Data URI for other uses if needed.
         return { file: { name: file.name, content: result.data, originalContent: dataUri } };
       }
       
-      // For other text files, read them as text.
-      if (file.type.startsWith('text/')) {
+      if (file.type === 'text/plain') {
         const textContent = await file.text();
         return { file: { name: file.name, content: textContent } };
       }
 
-      // For images and other file types, just return the data URI.
+      // For images and other file types, use a data URI.
+      const dataUri = await readFileAsDataURL(file);
       return { file: { name: file.name, content: dataUri } };
     } catch (error) {
       console.error('Error processing file:', error);
@@ -1840,3 +1838,4 @@ const ResultsSkeleton = () => (
     </Card>
   </div>
 );
+
