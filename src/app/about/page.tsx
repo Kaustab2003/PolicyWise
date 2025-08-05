@@ -120,7 +120,7 @@ export default function AboutPage() {
                     Ask Document
                   </h3>
                   <p className="text-muted-foreground">
-                    Upload any text-based document to ask questions about its
+                    Upload any document to ask questions about its
                     content.
                   </p>
                   <ol className="list-decimal list-inside mt-2 space-y-1">
@@ -128,8 +128,7 @@ export default function AboutPage() {
                       Select "Ask Document" from the sidebar.
                     </li>
                     <li>
-                      Click the "Select a file" button to upload a `.txt`, `.md`,
-                      or `.pdf` file.
+                      Click the "Select a file" button to upload a document.
                     </li>
                     <li>
                       Once uploaded, type your question in the "Your Question"
@@ -160,7 +159,7 @@ export default function AboutPage() {
                       Select "Summarize Document" from the sidebar.
                     </li>
                     <li>
-                      Click the "Select a file" button to upload a `.txt`, `.md`, `.pdf`, `.jpg`, or `.png` file.
+                      Click the "Select a file" button to upload a document.
                     </li>
                     <li>Click "Generate Summary".</li>
                   </ol>

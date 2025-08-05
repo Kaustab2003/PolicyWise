@@ -261,15 +261,6 @@ export default function Home() {
   const processFile = async (
     file: File
   ): Promise<{ file?: DocumentContext; error?: string }> => {
-    const allowedFileExtensions = ['.txt', '.md', '.pdf', '.jpg', '.jpeg', '.png'];
-    const fileExtension = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
-  
-    if (!allowedFileExtensions.includes(fileExtension)) {
-      return {
-        error: `Skipping '${file.name}'. Please upload text, PDF, JPG, or PNG files.`,
-      };
-    }
-  
     try {
       const dataUri = await readFileAsDataURL(file);
       
@@ -284,12 +275,12 @@ export default function Home() {
       }
       
       // For other text files, read them as text.
-      if (file.type === 'text/plain' || file.type === 'text/markdown') {
+      if (file.type.startsWith('text/')) {
         const textContent = await file.text();
         return { file: { name: file.name, content: textContent } };
       }
 
-      // For images, just return the data URI.
+      // For images and other file types, just return the data URI.
       return { file: { name: file.name, content: dataUri } };
     } catch (error) {
       console.error('Error processing file:', error);
@@ -1273,7 +1264,7 @@ export default function Home() {
         ) : (
           <Button variant="outline" className="w-full" onClick={onTriggerClick} disabled={isLoading}>
             <FileUp className="mr-2" />
-            {isLoading ? 'Processing...' : 'Upload a file (.txt, .pdf, .jpg, .png)'}
+            {isLoading ? 'Processing...' : 'Upload a file'}
           </Button>
         )}
       </div>
@@ -1295,7 +1286,6 @@ export default function Home() {
                 ref={riskFileInputRef}
                 onChange={handleRiskFileChange}
                 className="hidden"
-                accept=".txt,.md,.pdf,.jpg,.jpeg,.png"
               />
             {riskFile ? (
                <FileUploadDisplay file={riskFile} onRemove={removeRiskFile} onTriggerClick={() => riskFileInputRef.current?.click()} isLoading={isLoading} />
@@ -1343,7 +1333,6 @@ export default function Home() {
               ref={complianceFileInputRef}
               onChange={handleComplianceFileChange}
               className="hidden"
-              accept=".txt,.md,.pdf,.jpg,.jpeg,.png"
             />
             {complianceFile ? (
                <FileUploadDisplay file={complianceFile} onRemove={removeComplianceFile} onTriggerClick={() => complianceFileInputRef.current?.click()} isLoading={isLoading} />
@@ -1470,7 +1459,6 @@ export default function Home() {
                 ref={improveFileInputRef}
                 onChange={handleImproveFileChange}
                 className="hidden"
-                accept=".txt,.md,.pdf,.jpg,.jpeg,.png"
               />
             {improveFile ? (
                <FileUploadDisplay file={improveFile} onRemove={removeImproveFile} onTriggerClick={() => improveFileInputRef.current?.click()} isLoading={isLoading} />
@@ -1520,7 +1508,6 @@ export default function Home() {
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
-                accept=".txt,.md,.pdf,.jpg,.jpeg,.png"
                 multiple
                 disabled={documentFiles.length >= 5}
               />
@@ -1617,7 +1604,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle>Summarize a Document</CardTitle>
             <CardDescription>
-              Upload a document (.txt, .md, .pdf, .jpg, .png) to get a concise summary in your selected language.
+              Upload a document to get a concise summary in your selected language.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1629,7 +1616,6 @@ export default function Home() {
                 ref={summarizeFileInputRef}
                 onChange={handleSummarizeFileChange}
                 className="hidden"
-                accept=".txt,.md,.pdf,.jpg,.jpeg,.png"
               />
               {!summarizeFile && (
                 <Button
