@@ -114,18 +114,14 @@ const askDocumentFlow = ai.defineFlow(
     }));
 
     const parsableDocuments = input.documents.map(doc => {
-      // Decode the data URI to see if it's a non-image file that needs text extraction
-      const isPdf = doc.content.startsWith('data:application/pdf;base64,');
+      // Check if the content is a data URI for an image.
+      const isImageDataUri = doc.content.startsWith('data:image');
       
-      if (isPdf) {
-         const base64Data = doc.content.split(',')[1];
-         const textContent = Buffer.from(base64Data, 'base64').toString('utf-8');
-         return { ...doc, content: textContent };
-      }
-      
-      // For images, we pass the data URI directly to the prompt's `media` helper.
-      // For already-extracted text, we just pass the content.
-      return { ...doc, content: `{{media url="${doc.content}"}}` };
+      // If it's an image, wrap it in the media helper.
+      // Otherwise, it's pre-parsed text (from PDF, TXT, etc.), so pass it directly.
+      const content = isImageDataUri ? `{{media url="${doc.content}"}}` : doc.content;
+
+      return { ...doc, content };
     });
     
     const {output} = await prompt({...input, history: parsableHistory, documents: parsableDocuments});
