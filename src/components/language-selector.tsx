@@ -20,28 +20,43 @@ import {
 } from "@/components/ui/popover"
 
 const languages = [
-    // Existing and other world languages
+    // World languages
     { value: "en", label: "English", flag: "🇬🇧" },
     { value: "ar", label: "العربية", flag: "🇸🇦" },
-    { value: "bn", label: "বাংলা", flag: "🇧🇩" },
     { value: "zh", label: "中文", flag: "🇨🇳" },
+    { value: "cs", label: "Čeština", flag: "🇨🇿" },
+    { value: "da", label: "Dansk", flag: "🇩🇰" },
+    { value: "nl", label: "Nederlands", flag: "🇳🇱" },
+    { value: "fi", label: "Suomi", flag: "🇫🇮" },
     { value: "fr", label: "Français", flag: "🇫🇷" },
     { value: "de", label: "Deutsch", flag: "🇩🇪" },
+    { value: "el", label: "Ελληνικά", flag: "🇬🇷" },
     { value: "he", label: "עברית", flag: "🇮🇱" },
-    { value: "hi", label: "हिन्दी", flag: "🇮🇳" },
+    { value: "hu", label: "Magyar", flag: "🇭🇺" },
+    { value: "id", label: "Bahasa Indonesia", flag: "🇮🇩" },
     { value: "it", label: "Italiano", flag: "🇮🇹" },
     { value: "ja", label: "日本語", flag: "🇯🇵" },
     { value: "ko", label: "한국어", flag: "🇰🇷" },
+    { value: "ms", label: "Bahasa Melayu", flag: "🇲🇾" },
+    { value: "no", label: "Norsk", flag: "🇳🇴" },
+    { value: "pl", label: "Polski", flag: "🇵🇱" },
     { value: "pt", label: "Português", flag: "🇵🇹" },
+    { value: "ro", label: "Română", flag: "🇷🇴" },
     { value: "ru", label: "Русский", flag: "🇷🇺" },
     { value: "es", label: "Español", flag: "🇪🇸" },
+    { value: "sw", label: "Kiswahili", flag: "🇰🇪" },
     { value: "sv", label: "Svenska", flag: "🇸🇪" },
+    { value: "tl", label: "Tagalog", flag: "🇵🇭" },
+    { value: "th", label: "ภาษาไทย", flag: "🇹🇭" },
+    { value: "tr", label: "Türkçe", flag: "🇹🇷" },
+    { value: "uk", label: "Українська", flag: "🇺🇦" },
+    { value: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
     
     // Indian Languages
     { value: "as", label: "অসমীয়া", flag: "🇮🇳" },
-    // Bengali (bn) is already included
+    { value: "bn", label: "বাংলা", flag: "🇮🇳" },
     { value: "gu", label: "ગુજરાતી", flag: "🇮🇳" },
-    // Hindi (hi) is already included
+    { value: "hi", label: "हिन्दी", flag: "🇮🇳" },
     { value: "kn", label: "ಕನ್ನಡ", flag: "🇮🇳" },
     { value: "ks", label: "कश्मीरी", flag: "🇮🇳" },
     { value: "ml", label: "മലയാളം", flag: "🇮🇳" },
