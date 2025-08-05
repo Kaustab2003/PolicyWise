@@ -2,7 +2,7 @@
 
 import 'regenerator-runtime/runtime';
 import { useState, useRef, useEffect } from 'react';
-import { askDocumentAction, improveAction, summarizeAction, translateAction, summarizeDocumentAction, complianceCheckAction, riskDetectionAction } from './actions';
+import { askDocumentAction, improveAction, summarizeAction, translateAction, summarizeDocumentAction, complianceCheckAction, riskDetectionAction, generateSpeechAction } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX, FileUp, Replace, Check, ChevronsUpDown, User, UserCircle } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX, FileUp, Replace, Check, ChevronsUpDown, User, UserCircle, Volume2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput, ImprovementSuggestion, SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
 import type { AskDocumentOutput } from '@/ai/flows/ask-document';
@@ -23,6 +23,7 @@ import type { TranslateTextOutput } from '@/ai/flows/translate-text';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
 import type { ComplianceCheckOutput, ComplianceItem } from '@/ai/flows/compliance-checker';
 import type { RiskDetectionOutput, RiskItem } from '@/ai/flows/risk-detection';
+import type { GenerateSpeechOutput } from '@/ai/flows/generate-speech';
 import { LanguageSelector } from '@/components/language-selector';
 import { VoiceInput } from '@/components/voice-input';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
@@ -67,13 +68,14 @@ const DocumentContextSchema = z.object({
   content: z.string().describe("A data URI representing the document content (e.g., 'data:image/jpeg;base64,...' or 'data:application/pdf;base64,...')."),
 });
 const ConversationTurnSchema = z.object({
+  id: z.string(),
   role: z.enum(['user', 'model']),
   content: z.string(),
   sourceFile: z.string().optional(),
 });
 const AskDocumentInputSchema = z.object({
   documents: z.array(DocumentContextSchema).describe('An array of documents to search for an answer.'),
-  history: z.array(ConversationTurnSchema).describe('The conversation history.'),
+  history: z.array(ConversationTurnSchema.omit({id: true})).describe('The conversation history.'),
   userQuery: z.string().describe('The latest user question.'),
 });
 export type AskDocumentInput = z.infer<typeof AskDocumentInputSchema>;
@@ -100,6 +102,11 @@ const RiskDetectionInputSchema = z.object({
   policyDocument: z.string().describe("The policy document to be analyzed for risks."),
 });
 export type RiskDetectionInput = z.infer<typeof RiskDetectionInputSchema>;
+
+const GenerateSpeechInputSchema = z.object({
+  text: z.string().describe('The text to be converted to speech.'),
+});
+export type GenerateSpeechInput = z.infer<typeof GenerateSpeechInputSchema>;
 
 const defaultPolicy = `## TechGadget Pro - 1-Year Limited Warranty
 
@@ -161,6 +168,11 @@ export default function Home() {
   const [riskFile, setRiskFile] = useState<DocumentContext | null>(null);
   const riskFileInputRef = useRef<HTMLInputElement>(null);
 
+  // State for Text-to-Speech
+  const [audioPlayer, setAudioPlayer] = useState<HTMLAudioElement | null>(null);
+  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+  const [currentlyLoading, setCurrentlyLoading] = useState<string | null>(null);
+
   const [summaryResult, setSummaryResult] =
     useState<GenerateSummaryFromQueryOutput | null>(null);
   const [improvementResult, setImprovementResult] =
@@ -173,6 +185,15 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
     setIsClient(true);
+    const audio = new Audio();
+    setAudioPlayer(audio);
+
+    const handleEnded = () => setCurrentlyPlaying(null);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('ended', handleEnded);
+    };
   }, []);
 
   const {
@@ -333,14 +354,14 @@ export default function Home() {
     setComplianceResult(null);
     setRiskResult(null);
     
-    const currentTurn: ConversationTurn = { role: 'user', content: documentQuery };
-    const newHistory = [...askHistory, currentTurn];
+    const userTurn: ConversationTurn = { id: crypto.randomUUID(), role: 'user', content: documentQuery };
+    const newHistory = [...askHistory, userTurn];
     setAskHistory(newHistory);
     setDocumentQuery('');
     
     const input: AskDocumentInput = {
       documents: documentFiles.map(f => ({ name: f.name, content: f.content })),
-      history: askHistory,
+      history: askHistory.map(({id, ...rest}) => rest), // Omit id for the API call
       userQuery: documentQuery,
     };
     
@@ -354,7 +375,7 @@ export default function Home() {
       // Remove the user's query from history if there was an error
       setAskHistory(prev => prev.slice(0, -1));
     } else if (result.data) {
-      const modelTurn: ConversationTurn = { role: 'model', content: result.data.answer, sourceFile: result.data.sourceFile };
+      const modelTurn: ConversationTurn = { id: crypto.randomUUID(), role: 'model', content: result.data.answer, sourceFile: result.data.sourceFile };
       setAskHistory(prev => [...prev, modelTurn]);
     }
     setIsLoading(false);
@@ -529,6 +550,38 @@ export default function Home() {
     } else {
       resetTranscript();
       SpeechRecognition.startListening({ language });
+    }
+  };
+
+  const handlePlayAudio = async (turnId: string, text: string) => {
+    if (!audioPlayer) return;
+
+    if (currentlyPlaying === turnId) {
+      audioPlayer.pause();
+      setCurrentlyPlaying(null);
+      return;
+    }
+
+    setCurrentlyLoading(turnId);
+    setCurrentlyPlaying(null);
+
+    try {
+      const result = await generateSpeechAction({ text });
+      if (result.error || !result.data) {
+        throw new Error(result.error || 'Failed to generate audio.');
+      }
+      audioPlayer.src = result.data.audioDataUri;
+      audioPlayer.play();
+      setCurrentlyPlaying(turnId);
+    } catch (e) {
+      const error = e instanceof Error ? e.message : 'An unknown error occurred.';
+      toast({
+        variant: 'destructive',
+        title: 'Audio Error',
+        description: error,
+      });
+    } finally {
+      setCurrentlyLoading(null);
     }
   };
 
@@ -808,12 +861,36 @@ export default function Home() {
        return (
         <div className="space-y-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
           {askHistory.map((turn, index) => (
-            <div key={index} className="flex gap-3">
+            <div key={turn.id} className="flex gap-3">
               <div className="p-1.5 bg-muted rounded-full h-fit">
                 {turn.role === 'user' ? <User className="h-5 w-5 text-muted-foreground" /> : <Bot className="h-5 w-5 text-primary" />}
               </div>
               <div className="flex-1 space-y-2">
-                <h4 className="font-semibold capitalize">{turn.role}</h4>
+                <div className="flex justify-between items-center">
+                   <h4 className="font-semibold capitalize">{turn.role}</h4>
+                    {turn.role === 'model' && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => handlePlayAudio(turn.id, turn.content)}
+                            disabled={currentlyLoading !== null}
+                          >
+                            {currentlyLoading === turn.id ? (
+                               <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                               <Volume2 className={cn("h-4 w-4", currentlyPlaying === turn.id && "text-primary")} />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Read aloud</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                </div>
                 <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
                   {turn.content}
                 </div>

@@ -8,3 +8,4 @@ import '@/ai/flows/translate-text.ts';
 import '@/ai/flows/summarize-document.ts';
 import '@/ai/flows/compliance-checker.ts';
 import '@/ai/flows/risk-detection.ts';
+import '@/ai/flows/generate-speech.ts';

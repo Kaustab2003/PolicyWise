@@ -2,7 +2,6 @@
 
 import {
   generateSummaryFromQuery,
-  type GenerateSummaryFromQueryOutput,
 } from '@/ai/flows/generate-summary-from-query';
 import {
   suggestPolicyImprovements,
@@ -10,14 +9,16 @@ import {
 } from '@/ai/flows/suggest-policy-improvements';
 import {
   askDocument,
-  type AskDocumentOutput,
   type AskDocumentInput,
+  type AskDocumentOutput,
 } from '@/ai/flows/ask-document';
 import { summarizeDocument, type SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
 import { translateText, type TranslateTextOutput } from '@/ai/flows/translate-text';
 import { complianceCheck, type ComplianceCheckOutput } from '@/ai/flows/compliance-checker';
 import { riskDetection, type RiskDetectionOutput } from '@/ai/flows/risk-detection';
-import type { GenerateSummaryFromQueryInput, SuggestPolicyImprovementsInput, SummarizeDocumentInput, TranslateTextInput, ComplianceCheckInput, RiskDetectionInput } from './page';
+import { generateSpeech, type GenerateSpeechOutput } from '@/ai/flows/generate-speech';
+import type { GenerateSummaryFromQueryInput, SuggestPolicyImprovementsInput, SummarizeDocumentInput, TranslateTextInput, ComplianceCheckInput, RiskDetectionInput, GenerateSpeechInput } from './page';
+import { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 
 
 async function translate(text: string, targetLanguage: string): Promise<string> {
@@ -28,6 +29,25 @@ async function translate(text: string, targetLanguage: string): Promise<string> 
   // No try/catch here, as it will be handled by the calling action
   const result = await translateText({ text, targetLanguage });
   return result.translatedText;
+}
+
+export async function generateSpeechAction(
+  generateSpeechInput: GenerateSpeechInput,
+): Promise<{ data: GenerateSpeechOutput | null; error: string | null }> {
+  if (!generateSpeechInput.text) {
+    return { data: null, error: 'Text for speech generation is required.' };
+  }
+  try {
+    const result = await generateSpeech(generateSpeechInput);
+    return { data: result, error: null };
+  } catch (e) {
+    console.error('generateSpeechAction failed:', e);
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+    return {
+      data: null,
+      error: `Failed to generate speech: ${errorMessage}`,
+    };
+  }
 }
 
 export async function complianceCheckAction(
@@ -189,7 +209,6 @@ export async function summarizeAction(
     const result = await generateSummaryFromQuery({
       ...generateSummaryFromQueryInput,
       userQueries: translatedQueries,
-      clauseClassifications: 'Coverage, Exclusion, Limit, Definition, Service', // Provide a default or derived value
     });
 
     const translatedAnswers = await Promise.all(
