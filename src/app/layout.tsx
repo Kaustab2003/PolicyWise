@@ -28,11 +28,11 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
-          <ParticleBackground className="fixed inset-0 -z-10" />
+          <ParticleBackground />
           <SidebarProvider>
             {children}
           </SidebarProvider>

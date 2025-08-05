@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useTheme } from 'next-themes';
 
 interface Particle {
   id: number;
@@ -10,12 +11,13 @@ interface Particle {
 
 const ParticleBackground = ({
   className,
-  quantity = 50,
+  quantity = 25,
 }: {
   className?: string;
   quantity?: number;
 }) => {
   const [particles, setParticles] = useState<Particle[]>([]);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const newParticles: Particle[] = [];
@@ -25,19 +27,28 @@ const ParticleBackground = ({
         style: {
           left: `${Math.random() * 100}%`,
           top: `${Math.random() * 100}%`,
-          animationDelay: `${Math.random() * 6}s`,
-          animationDuration: `${Math.random() * 4 + 4}s`, // 4s to 8s
+          animationDelay: `${Math.random() * 8}s`,
+          animationDuration: `${Math.random() * 5 + 5}s`,
         },
       });
     }
     setParticles(newParticles);
   }, [quantity]);
+  
+  // We only want the fancy background on dark mode
+  if (theme !== 'dark') {
+    return null;
+  }
 
   return (
     <div className={cn('particle-background', className)}>
       {particles.map((p) => (
         <div key={p.id} className="particle" style={p.style} />
       ))}
+      <div className="orb">
+        <div className="orb-core" />
+        <div className="orb-glow" />
+      </div>
     </div>
   );
 };
