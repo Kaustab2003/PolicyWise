@@ -14,7 +14,7 @@ import {z} from 'genkit';
 const RiskDetectionInputSchema = z.object({
   policyDocument: z
     .string()
-    .describe('The policy document to be analyzed for risks.'),
+    .describe("The policy document to be analyzed for risks, as a string or a data URI (e.g., 'data:image/jpeg;base64,...')."),
 });
 export type RiskDetectionInput = z.infer<typeof RiskDetectionInputSchema>;
 
@@ -50,7 +50,7 @@ The report must contain:
     - 'suggestion': A concrete suggestion for mitigating the risk.
 
 Policy Document:
-{{{policyDocument}}}`,
+{{media url=policyDocument}}`,
 });
 
 const riskDetectionFlow = ai.defineFlow(

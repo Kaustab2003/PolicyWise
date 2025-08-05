@@ -14,7 +14,7 @@ import {z} from 'genkit';
 const ComplianceCheckInputSchema = z.object({
   policyDocument: z
     .string()
-    .describe('The policy document to be checked.'),
+    .describe("The policy document to be checked, as a string or a data URI (e.g., 'data:image/jpeg;base64,...')."),
   complianceStandard: z
     .string()
     .describe('The compliance standard to check against (e.g., "GDPR", "HIPAA").'),
@@ -53,7 +53,7 @@ The report must contain:
 Compliance Standard: {{{complianceStandard}}}
 
 Policy Document:
-{{{policyDocument}}}`,
+{{media url=policyDocument}}`,
 });
 
 const complianceCheckFlow = ai.defineFlow(

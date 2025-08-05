@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX, FileUp, Replace } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
@@ -92,9 +92,13 @@ export default function Home() {
   // State for compliance checker
   const [complianceStandard, setComplianceStandard] = useState('GDPR');
   const [complianceResult, setComplianceResult] = useState<ComplianceCheckOutput | null>(null);
+  const [complianceFile, setComplianceFile] = useState<DocumentContext | null>(null);
+  const complianceFileInputRef = useRef<HTMLInputElement>(null);
   
   // State for risk detection
   const [riskResult, setRiskResult] = useState<RiskDetectionOutput | null>(null);
+  const [riskFile, setRiskFile] = useState<DocumentContext | null>(null);
+  const riskFileInputRef = useRef<HTMLInputElement>(null);
 
   const [summaryResult, setSummaryResult] =
     useState<GenerateSummaryFromQueryOutput | null>(null);
@@ -222,18 +226,22 @@ export default function Home() {
     }
   };
   
-  const handleSummarizeFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const createSingleFileHandler = (
+    setFile: (file: DocumentContext | null) => void,
+    setResult: (result: any) => void,
+    inputRef: React.RefObject<HTMLInputElement>
+  ) => async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setIsLoading(true);
-    setSummarizeResult(null);
-    setSummarizeFile(null);
+    setResult(null);
+    setFile(null);
 
     const result = await processFile(file);
     
     if (result.file) {
-      setSummarizeFile(result.file);
+      setFile(result.file);
     } else if (result.error) {
        toast({
          variant: 'destructive',
@@ -244,18 +252,23 @@ export default function Home() {
     
     setIsLoading(false);
 
-    if(summarizeFileInputRef.current) {
-      summarizeFileInputRef.current.value = '';
+    if(inputRef.current) {
+      inputRef.current.value = '';
     }
   };
+
+  const handleSummarizeFileChange = createSingleFileHandler(setSummarizeFile, setSummarizeResult, summarizeFileInputRef);
+  const handleComplianceFileChange = createSingleFileHandler(setComplianceFile, setComplianceResult, complianceFileInputRef);
+  const handleRiskFileChange = createSingleFileHandler(setRiskFile, setRiskResult, riskFileInputRef);
+
 
   const removeFile = (fileName: string) => {
     setDocumentFiles(files => files.filter(file => file.name !== fileName));
   }
   
-  const removeSummarizeFile = () => {
-    setSummarizeFile(null);
-  }
+  const removeSummarizeFile = () => setSummarizeFile(null);
+  const removeComplianceFile = () => setComplianceFile(null);
+  const removeRiskFile = () => setRiskFile(null);
 
   const handleAskDocument = async () => {
     if (documentQueries.length === 0) {
@@ -377,6 +390,9 @@ export default function Home() {
   };
 
   const handleComplianceCheck = async () => {
+    const document = complianceFile?.content || policy;
+    if (!document) return;
+
     setIsLoading(true);
     setSummaryResult(null);
     setImprovementResult(null);
@@ -384,7 +400,7 @@ export default function Home() {
     setTranslationResult(null);
     setSummarizeResult(null);
     setRiskResult(null);
-    const result = await complianceCheckAction(policy, complianceStandard, language);
+    const result = await complianceCheckAction(document, complianceStandard, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -399,6 +415,9 @@ export default function Home() {
   };
 
   const handleRiskDetection = async () => {
+    const document = riskFile?.content || policy;
+    if (!document) return;
+
     setIsLoading(true);
     setSummaryResult(null);
     setImprovementResult(null);
@@ -406,7 +425,7 @@ export default function Home() {
     setTranslationResult(null);
     setSummarizeResult(null);
     setComplianceResult(null);
-    const result = await riskDetectionAction(policy, language);
+    const result = await riskDetectionAction(document, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -890,6 +909,34 @@ export default function Home() {
   const renderCurrentTab = () => {
     const commonButtonClasses = "w-full transition-all transform hover:scale-105 hover:brightness-110 hover:saturate-125 active:scale-100";
 
+    const FileUploadDisplay = ({ file, onRemove, onTriggerClick, isLoading }: { file: DocumentContext | null, onRemove: () => void, onTriggerClick: () => void, isLoading: boolean }) => (
+      <div className="space-y-2">
+        <label className="font-semibold">Policy Document</label>
+        {file ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
+              <div className="flex items-center gap-2 truncate">
+                {file.content.startsWith('data:image') ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
+                <span className="truncate">{file.name}</span>
+              </div>
+              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={onRemove}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button variant="outline" className="w-full" onClick={onTriggerClick}>
+              <Replace className="mr-2" />
+              Replace File
+            </Button>
+          </div>
+        ) : (
+          <Button variant="outline" className="w-full" onClick={onTriggerClick} disabled={isLoading}>
+            <FileUp className="mr-2" />
+            {isLoading ? 'Processing...' : 'Upload a file (.txt, .pdf, .jpg, .png)'}
+          </Button>
+        )}
+      </div>
+    );
+
     if (activeTab === 'risk') {
       return (
         <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
@@ -900,19 +947,35 @@ export default function Home() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="policy-doc-risk" className="font-semibold">Policy Document</label>
-              <Textarea
-                id="policy-doc-risk"
-                placeholder="Paste your policy document here..."
-                className="min-h-[350px] font-code text-xs"
-                value={policy}
-                onChange={(e) => setPolicy(e.target.value)}
+             <Input
+                id="risk-file-upload"
+                type="file"
+                ref={riskFileInputRef}
+                onChange={handleRiskFileChange}
+                className="hidden"
+                accept=".txt,.md,.pdf,.jpg,.jpeg,.png"
               />
-            </div>
+            {riskFile ? (
+               <FileUploadDisplay file={riskFile} onRemove={removeRiskFile} onTriggerClick={() => riskFileInputRef.current?.click()} isLoading={isLoading} />
+            ) : (
+              <div className="space-y-2">
+                <label htmlFor="policy-doc-risk" className="font-semibold">Policy Document</label>
+                <Textarea
+                  id="policy-doc-risk"
+                  placeholder="Paste your policy document here, or upload a file."
+                  className="min-h-[300px] font-code text-xs"
+                  value={policy}
+                  onChange={(e) => setPolicy(e.target.value)}
+                />
+                 <Button variant="outline" className="w-full" onClick={() => riskFileInputRef.current?.click()} disabled={isLoading}>
+                  <FileUp className="mr-2" />
+                  {isLoading ? 'Processing...' : 'Or Upload a File'}
+                </Button>
+              </div>
+            )}
             <Button
               onClick={handleRiskDetection}
-              disabled={isLoading || !policy}
+              disabled={isLoading || (!policy && !riskFile)}
               className={cn(commonButtonClasses, "bg-primary hover:bg-primary/90 text-primary-foreground")}
             >
               {isLoading && activeTab === 'risk' ? 'Detecting...' : <><AlertTriangle className="mr-2"/>Detect Risks</>}
@@ -928,20 +991,36 @@ export default function Home() {
           <CardHeader>
             <CardTitle>Compliance Checker</CardTitle>
             <CardDescription>
-              Check a policy's adherence to a specific compliance standard (e.g., GDPR, HIPAA).
+              Check a policy's adherence to a specific compliance standard.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="policy-doc-compliance" className="font-semibold">Policy Document</label>
-              <Textarea
-                id="policy-doc-compliance"
-                placeholder="Paste your policy document here..."
-                className="min-h-[300px] font-code text-xs"
-                value={policy}
-                onChange={(e) => setPolicy(e.target.value)}
-              />
-            </div>
+            <Input
+              id="compliance-file-upload"
+              type="file"
+              ref={complianceFileInputRef}
+              onChange={handleComplianceFileChange}
+              className="hidden"
+              accept=".txt,.md,.pdf,.jpg,.jpeg,.png"
+            />
+            {complianceFile ? (
+               <FileUploadDisplay file={complianceFile} onRemove={removeComplianceFile} onTriggerClick={() => complianceFileInputRef.current?.click()} isLoading={isLoading} />
+            ) : (
+              <div className="space-y-2">
+                <label htmlFor="policy-doc-compliance" className="font-semibold">Policy Document</label>
+                <Textarea
+                  id="policy-doc-compliance"
+                  placeholder="Paste policy text or upload a file."
+                  className="min-h-[250px] font-code text-xs"
+                  value={policy}
+                  onChange={(e) => setPolicy(e.target.value)}
+                />
+                <Button variant="outline" className="w-full" onClick={() => complianceFileInputRef.current?.click()} disabled={isLoading}>
+                  <FileUp className="mr-2" />
+                  {isLoading ? 'Processing...' : 'Or Upload a File'}
+                </Button>
+              </div>
+            )}
             <div className="space-y-2">
               <label htmlFor="compliance-standard" className="font-semibold">Compliance Standard</label>
               <Input
@@ -953,7 +1032,7 @@ export default function Home() {
             </div>
             <Button
               onClick={handleComplianceCheck}
-              disabled={isLoading || !policy || !complianceStandard}
+              disabled={isLoading || (!policy && !complianceFile) || !complianceStandard}
               className={cn(commonButtonClasses, "bg-accent hover:bg-accent/90 text-accent-foreground")}
             >
               {isLoading && activeTab === 'compliance' ? 'Checking...' : <><ShieldCheck className="mr-2" />Check Compliance</>}
