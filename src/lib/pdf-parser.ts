@@ -4,8 +4,9 @@ import { Worker } from 'worker_threads';
 import path from 'path';
 
 // Note: In a Next.js server environment, we need to construct the path 
-// to our worker file from the current working directory.
-const workerPath = path.resolve(process.cwd(), '.next/server/app/lib/pdf-parser-worker.js');
+// to our worker file. The bundled worker file will be in the same directory
+// as this bundled file.
+const workerPath = path.resolve(__dirname, 'pdf-parser-worker.js');
 
 export async function parsePdf(base64Data: string): Promise<string> {
   const buffer = Buffer.from(base64Data, 'base64');

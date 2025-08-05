@@ -21,10 +21,7 @@ const nextConfig: NextConfig = {
    webpack: (config, { isServer, buildId }) => {
     // This is to ensure our worker file is bundled correctly by Next.js/Webpack.
     if (isServer) {
-        config.entry = {
-            ...config.entry,
-            'app/lib/pdf-parser-worker': './src/lib/pdf-parser-worker.ts'
-        };
+        config.entry['pdf-parser-worker'] = './src/lib/pdf-parser-worker.ts';
     }
     return config;
   },
