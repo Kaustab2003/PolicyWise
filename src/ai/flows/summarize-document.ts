@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Summarizes the content of a provided document.
+ * @fileOverview Summarizes the content of a provided document and extracts key points.
  *
  * - summarizeDocument - A function that handles summarizing a document.
  * - SummarizeDocumentInput - The input type for the summarizeDocument function.
@@ -26,6 +26,7 @@ export type SummarizeDocumentInput = z.infer<
 
 const SummarizeDocumentOutputSchema = z.object({
   summary: z.string().describe('The generated summary of the document.'),
+  keyPoints: z.array(z.string()).describe('A list of the most important key points from the document.'),
 });
 export type SummarizeDocumentOutput = z.infer<
   typeof SummarizeDocumentOutputSchema
@@ -41,11 +42,12 @@ const prompt = ai.definePrompt({
   name: 'summarizeDocumentPrompt',
   input: {schema: z.any()},
   output: {schema: SummarizeDocumentOutputSchema},
-  prompt: `You are an expert at summarizing documents. Analyze the following document content and provide a concise summary.
+  prompt: `You are an expert at summarizing documents. Analyze the following document content and provide a concise summary and a list of key points.
 
 The summary should capture the key points and main ideas of the document.
+The key points should be a list of the most important individual takeaways.
 
-Generate the summary in the language with the ISO 639-1 code: "{{targetLanguage}}".
+Generate the summary and key points in the language with the ISO 639-1 code: "{{targetLanguage}}".
 
 Document Content:
 {{media url=documentContent}}

@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
@@ -152,20 +152,8 @@ export default function Home() {
     }
   
     try {
-      if (file.type.startsWith('text/')) {
-        // For text files, we can read as text.
-        // Although we could convert them to data URIs, it's less efficient.
-        // The AI model can handle raw text just fine for summarization.
-        // Let's create a data URI for consistency with other file types.
-        const textContent = await file.text();
-        const base64 = btoa(unescape(encodeURIComponent(textContent)));
-        return { file: { name: file.name, content: `data:text/plain;base64,${base64}` } };
-
-      } else {
-        // For PDF and images, convert to data URI
-        const dataUri = await readFileAsDataURL(file);
-        return { file: { name: file.name, content: dataUri } };
-      }
+      const dataUri = await readFileAsDataURL(file);
+      return { file: { name: file.name, content: dataUri } };
     } catch (error) {
       console.error('Error processing file:', error);
       const errorMessage =
@@ -375,22 +363,47 @@ export default function Home() {
 
     if (activeTab === 'summarize' && summarizeResult) {
       return (
-        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="text-primary" />
-              Document Summary
-            </CardTitle>
-            <CardDescription>
-              A concise summary of the document is below.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-              {summarizeResult.summary}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="text-primary" />
+                Document Summary
+              </CardTitle>
+              <CardDescription>
+                A concise summary of the document is below.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+                {summarizeResult.summary}
+              </div>
+            </CardContent>
+          </Card>
+          {summarizeResult.keyPoints && summarizeResult.keyPoints.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="text-primary" />
+                  Key Points
+                </CardTitle>
+                <CardDescription>
+                  The most important points identified from the document.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {summarizeResult.keyPoints.map((point, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-1 shrink-0" />
+                      <span className="text-sm">{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       );
     }
 
