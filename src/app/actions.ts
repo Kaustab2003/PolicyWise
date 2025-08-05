@@ -188,7 +188,7 @@ export async function summarizeAction(
     const result = await generateSummaryFromQuery({
       ...generateSummaryFromQueryInput,
       userQueries: translatedQueries,
-      clauseClassifications: 'Coverage, Exclusion, Limit, Definition, Service',
+      clauseClassifications: 'Coverage, Exclusion, Limit, Definition, Service', // Provide a default or derived value
     });
 
     const translatedAnswers = await Promise.all(

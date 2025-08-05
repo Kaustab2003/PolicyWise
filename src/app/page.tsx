@@ -17,13 +17,13 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX, FileUp, Replace, Check, ChevronsUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
+import type { GenerateSummaryFromQueryInput, GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
-import type { AskDocumentOutput } from '@/ai/flows/ask-document';
+import type { AskDocumentInput, AskDocumentOutput, DocumentContext as AskDocumentContext } from '@/ai/flows/ask-document';
 import type { TranslateTextOutput } from '@/ai/flows/translate-text';
-import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
-import type { ComplianceCheckOutput } from '@/ai/flows/compliance-checker';
-import type { RiskDetectionOutput } from '@/ai/flows/risk-detection';
+import type { SummarizeDocumentOutput, SummarizeDocumentInput } from '@/ai/flows/summarize-document';
+import type { ComplianceCheckOutput, ComplianceCheckInput } from '@/ai/flows/compliance-checker';
+import type { RiskDetectionOutput, RiskDetectionInput } from '@/ai/flows/risk-detection';
 import { LanguageSelector } from '@/components/language-selector';
 import { VoiceInput } from '@/components/voice-input';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
@@ -76,7 +76,6 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'query' | 'improve' | 'ask' | 'translate' | 'summarize' | 'compliance' | 'risk'>('query');
   const [language, setLanguage] = useState('en');
 
-  // DocumentContext can be shared across components that need it
   type DocumentContext = {
     name: string;
     content: string;
@@ -291,7 +290,13 @@ export default function Home() {
     setSummarizeResult(null);
     setComplianceResult(null);
     setRiskResult(null);
-    const result = await askDocumentAction(documentFiles, documentQueries, language);
+    
+    const input: AskDocumentInput = {
+      documents: documentFiles.map(f => ({ name: f.name, content: f.content })),
+      userQueries: documentQueries,
+    };
+    
+    const result = await askDocumentAction(input, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -306,10 +311,6 @@ export default function Home() {
   };
 
   const handleSummarize = async () => {
-    if (queries.length === 0) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Please add at least one question.' });
-      return;
-    }
     setIsLoading(true);
     setImprovementResult(null);
     setAskResult(null);
@@ -317,7 +318,14 @@ export default function Home() {
     setSummarizeResult(null);
     setComplianceResult(null);
     setRiskResult(null);
-    const result = await summarizeAction(policy, queries, language);
+
+    const input: GenerateSummaryFromQueryInput = {
+      policyDocument: policy,
+      userQueries: queries,
+      clauseClassifications: '' // This will be provided on the server
+    };
+
+    const result = await summarizeAction(input, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -339,7 +347,7 @@ export default function Home() {
     setSummarizeResult(null);
     setComplianceResult(null);
     setRiskResult(null);
-    const result = await improveAction(policy, language);
+    const result = await improveAction({ policyDocument: policy }, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -361,7 +369,7 @@ export default function Home() {
     setSummarizeResult(null);
     setComplianceResult(null);
     setRiskResult(null);
-    const result = await translateAction(textToTranslate, language);
+    const result = await translateAction({ text: textToTranslate, targetLanguage: language });
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -384,7 +392,13 @@ export default function Home() {
     setTranslationResult(null);
     setComplianceResult(null);
     setRiskResult(null);
-    const result = await summarizeDocumentAction(summarizeFile.content, language);
+    
+    const input: SummarizeDocumentInput = {
+      documentContent: summarizeFile.content,
+      targetLanguage: language
+    };
+
+    const result = await summarizeDocumentAction(input);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -409,7 +423,13 @@ export default function Home() {
     setTranslationResult(null);
     setSummarizeResult(null);
     setRiskResult(null);
-    const result = await complianceCheckAction(document, complianceStandard, language);
+
+    const input: ComplianceCheckInput = {
+      policyDocument: document,
+      complianceStandard: complianceStandard,
+    };
+
+    const result = await complianceCheckAction(input, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -434,7 +454,12 @@ export default function Home() {
     setTranslationResult(null);
     setSummarizeResult(null);
     setComplianceResult(null);
-    const result = await riskDetectionAction(document, language);
+
+    const input: RiskDetectionInput = {
+      policyDocument: document
+    };
+
+    const result = await riskDetectionAction(input, language);
     if (result.error) {
       toast({
         variant: 'destructive',
