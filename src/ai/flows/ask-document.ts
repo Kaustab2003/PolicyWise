@@ -65,8 +65,8 @@ Content:
 
 Here is the conversation history. Use it to understand context for follow-up questions.
 {{#each history}}
-{{#if (eq role "user")}}User: {{content}}{{/if}}
-{{#if (eq role "model")}}AI: {{content}}{{/if}}
+{{#if (this.role === "user")}}User: {{content}}{{/if}}
+{{#if (this.role === "model")}}AI: {{content}}{{/if}}
 {{/each}}
 
 Based on the documents and the conversation history, please answer the following question:
