@@ -18,25 +18,32 @@ const ParticleBackground = ({
 }) => {
   const [particles, setParticles] = useState<Particle[]>([]);
   const { theme } = useTheme();
+  const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
-    const newParticles: Particle[] = [];
-    for (let i = 0; i < quantity; i++) {
-      newParticles.push({
-        id: i,
-        style: {
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-          animationDelay: `${Math.random() * 8}s`,
-          animationDuration: `${Math.random() * 5 + 5}s`,
-        },
-      });
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (hasMounted) {
+      const newParticles: Particle[] = [];
+      for (let i = 0; i < quantity; i++) {
+        newParticles.push({
+          id: i,
+          style: {
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 8}s`,
+            animationDuration: `${Math.random() * 5 + 5}s`,
+          },
+        });
+      }
+      setParticles(newParticles);
     }
-    setParticles(newParticles);
-  }, [quantity]);
+  }, [quantity, hasMounted]);
   
-  // We only want the fancy background on dark mode
-  if (theme !== 'dark') {
+  // We only want the fancy background on dark mode, and only after client-side mount.
+  if (theme !== 'dark' || !hasMounted) {
     return null;
   }
 
