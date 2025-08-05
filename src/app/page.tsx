@@ -139,15 +139,10 @@ export default function Home() {
   };
 
   const processFile = async (file: File): Promise<DocumentContext | null> => {
-    const allowedMimeTypes = ['text/', 'application/pdf', 'image/'];
     const allowedFileExtensions = ['.txt', '.md', '.pdf', '.jpg', '.jpeg', '.png'];
     const fileExtension = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
 
-    const isAllowed =
-      allowedFileExtensions.includes(fileExtension) ||
-      allowedMimeTypes.some(type => file.type.startsWith(type));
-    
-    if (!isAllowed) {
+    if (!allowedFileExtensions.includes(fileExtension)) {
       toast({
         variant: 'destructive',
         title: 'Unsupported File Type',
@@ -222,8 +217,10 @@ export default function Home() {
 
     setIsLoading(true);
     setSummarizeResult(null);
+    setSummarizeFile(null);
 
     const processedFile = await processFile(file);
+    
     if (processedFile) {
       setSummarizeFile(processedFile);
     }
@@ -251,6 +248,7 @@ export default function Home() {
     setIsLoading(true);
     setSummaryResult(null);
     setImprovementResult(null);
+    setTranslationResult(null);
     setSummarizeResult(null);
     const result = await askDocumentAction(documentFiles, documentQueries, language);
     if (result.error) {
@@ -274,6 +272,7 @@ export default function Home() {
     setIsLoading(true);
     setImprovementResult(null);
     setAskResult(null);
+    setTranslationResult(null);
     setSummarizeResult(null);
     const result = await summarizeAction(policy, queries, language);
     if (result.error) {
@@ -293,6 +292,7 @@ export default function Home() {
     setIsLoading(true);
     setSummaryResult(null);
     setAskResult(null);
+    setTranslationResult(null);
     setSummarizeResult(null);
     const result = await improveAction(policy, language);
     if (result.error) {
@@ -310,7 +310,9 @@ export default function Home() {
   
   const handleTranslate = async () => {
     setIsLoading(true);
-    setTranslationResult(null);
+    setSummaryResult(null);
+    setImprovementResult(null);
+    setAskResult(null);
     setSummarizeResult(null);
     const result = await translateAction(textToTranslate, language);
     if (result.error) {
@@ -333,7 +335,6 @@ export default function Home() {
     setSummaryResult(null);
     setImprovementResult(null);
     setTranslationResult(null);
-    setSummarizeResult(null);
     const result = await summarizeDocumentAction(summarizeFile.content, language);
     if (result.error) {
       toast({
@@ -886,7 +887,7 @@ export default function Home() {
           <header className="p-4 border-b flex justify-between items-center sticky top-0 bg-background/80 backdrop-blur-sm z-10">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="md:hidden" />
-              <h2 className="text-xl font-semibold capitalize">{activeTab} Policy</h2>
+              <h2 className="text-xl font-semibold capitalize">{activeTab === 'query' || activeTab === 'improve' ? `${activeTab} Policy` : activeTab === 'ask' ? 'Ask Document' : activeTab === 'summarize' ? 'Summarize Document' : 'Translate'}</h2>
             </div>
             <div className="flex items-center gap-4">
               <LanguageSelector value={language} onValueChange={setLanguage} />
