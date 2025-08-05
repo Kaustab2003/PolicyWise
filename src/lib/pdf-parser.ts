@@ -2,15 +2,22 @@
 
 import { Worker } from 'worker_threads';
 import path from 'path';
+import fs from 'fs';
 
-// Construct an absolute path to the worker script.
-// This path points to the compiled JS file within the .next directory.
-const workerPath = path.resolve(process.cwd(), '.next/server/app/lib/pdf-parser-worker.js');
+
+// The path needs to point to the compiled .js file inside the .next directory
+const workerPath = path.resolve(process.cwd(), '.next/server/app/pdf-parser-worker.js');
 
 
 export async function parsePdf(base64Data: string): Promise<string> {
   const buffer = Buffer.from(base64Data, 'base64');
   return new Promise((resolve, reject) => {
+    
+    // Check if the worker file exists before trying to use it.
+    if (!fs.existsSync(workerPath)) {
+        return reject(new Error(`PDF worker not found at ${workerPath}. Please ensure the postbuild script ran correctly.`));
+    }
+
     // The reason we use a worker is to isolate the memory-intensive and potentially
     // crash-prone pdf-parse library from the main server thread. If pdf-parse
     // encounters a file that causes a catastrophic failure, it will crash the
