@@ -928,36 +928,31 @@ export default function Home() {
                     {turn.answers.map((item, index) => (
                       <AccordionItem value={`item-${index}`} key={index}>
                         <AccordionTrigger className="text-left font-semibold hover:no-underline">
-                          <div className='flex items-center justify-between w-full'>
-                            <span className='truncate pr-4'>{item.question}</span>
-                            <div className="flex items-center">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-7 w-7"
-                                    onClick={(e) => {
-                                      e.stopPropagation(); // prevent accordion from toggling
-                                      handlePlayAudio(`${turn.id}-${index}`, item.answer);
-                                    }}
-                                    disabled={currentlyLoading !== null}
-                                  >
-                                    {currentlyLoading === `${turn.id}-${index}` ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Volume2 className={cn("h-4 w-4", currentlyPlaying === `${turn.id}-${index}` && "text-primary")} />
-                                    )}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Read aloud</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </div>
-                          </div>
+                          <span className='truncate pr-4'>{item.question}</span>
                         </AccordionTrigger>
                         <AccordionContent className="prose prose-sm dark:prose-invert max-w-none pt-2">
+                          <div className="flex justify-end mb-2">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7"
+                                  onClick={() => handlePlayAudio(`${turn.id}-${index}`, item.answer)}
+                                  disabled={currentlyLoading !== null}
+                                >
+                                  {currentlyLoading === `${turn.id}-${index}` ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Volume2 className={cn("h-4 w-4", currentlyPlaying === `${turn.id}-${index}` && "text-primary")} />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Read aloud</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
                           <p>{item.answer}</p>
                           {item.sourceFile && (
                             <div className="pt-2">
