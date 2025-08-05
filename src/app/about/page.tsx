@@ -158,8 +158,7 @@ export default function AboutPage() {
                       Select "Summarize Document" from the sidebar.
                     </li>
                     <li>
-                      Click the "Select a file" button to upload a `.txt`, `.md`,
-                      or `.pdf` file.
+                      Click the "Select a file" button to upload a `.txt`, `.md`, `.pdf`, `.jpg`, or `.png` file.
                     </li>
                     <li>Click "Generate Summary".</li>
                   </ol>

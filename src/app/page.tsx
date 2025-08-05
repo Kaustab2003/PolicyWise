@@ -139,8 +139,16 @@ export default function Home() {
   };
 
   const processFile = async (file: File): Promise<DocumentContext | null> => {
-    const allowedTypes = ['text/', 'application/pdf', 'image/jpeg', 'image/png'];
-    if (!allowedTypes.some(type => file.type.startsWith(type))) {
+    const allowedMimeTypes = ['text/', 'application/pdf', 'image/jpeg', 'image/png'];
+    // For some reason, mac shows pdf as application/pdf but windows as text/pdf, so we check both.
+    const allowedFileExtensions = ['.txt', '.md', '.pdf', '.jpg', '.jpeg', '.png'];
+    const fileExtension = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
+
+    const isAllowed =
+      allowedMimeTypes.some(type => file.type.startsWith(type)) ||
+      allowedFileExtensions.includes(fileExtension);
+    
+    if (!isAllowed) {
       toast({
         variant: 'destructive',
         title: 'Unsupported File Type',
@@ -154,7 +162,7 @@ export default function Home() {
       if (file.type.startsWith('image/')) {
          const dataUri = await readFileAsDataURL(file);
          fileContent = { name: file.name, content: dataUri };
-      } else if (file.type === 'application/pdf') {
+      } else if (file.type === 'application/pdf' || fileExtension === '.pdf') {
         const formData = new FormData();
         formData.append('file', file);
         const result = await parsePdfAction(formData);
@@ -744,7 +752,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle>Summarize a Document</CardTitle>
             <CardDescription>
-              Upload a document to get a concise summary in your selected language.
+              Upload a document (.txt, .md, .pdf, .jpg, .png) to get a concise summary in your selected language.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -957,5 +965,3 @@ const ResultsSkeleton = () => (
     </Card>
   </div>
 );
-
-    
