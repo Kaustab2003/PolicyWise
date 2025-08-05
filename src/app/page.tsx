@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
@@ -29,6 +29,7 @@ import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarMenu, Side
 import Link from 'next/link';
 import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 const defaultPolicy = `## TechGadget Pro - 1-Year Limited Warranty
 
@@ -47,6 +48,11 @@ e) to a Product that has been modified to alter functionality or capability with
 If a defect arises and a valid claim is received by TechGadget within the Warranty Period, TechGadget will, at its option and to the extent permitted by law, either (1) repair the Product at no charge, using new or refurbished replacement parts or (2) exchange the Product with a new or refurbished Product.
 `;
 
+type DocumentFile = {
+  name: string;
+  content: string;
+}
+
 export default function Home() {
   const [policy, setPolicy] = useState(defaultPolicy);
   const [query, setQuery] = useState('Is accidental drop damage covered?');
@@ -54,8 +60,7 @@ export default function Home() {
   const [language, setLanguage] = useState('en');
 
   // State for document Q&A
-  const [documentContent, setDocumentContent] = useState('');
-  const [documentName, setDocumentName] = useState('');
+  const [documentFiles, setDocumentFiles] = useState<DocumentFile[]>([]);
   const [documentQuery, setDocumentQuery] = useState('');
   const [askResult, setAskResult] = useState<AskDocumentOutput | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -94,58 +99,76 @@ export default function Home() {
     }
   }, [transcript, activeTab]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    if (documentFiles.length + files.length > 5) {
+      toast({
+        variant: 'destructive',
+        title: 'Upload Limit Exceeded',
+        description: 'You can upload a maximum of 5 files.',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    setAskResult(null); // Clear previous results
+
+    const newFiles: DocumentFile[] = [];
+
+    for (const file of Array.from(files)) {
       if (!file.type.startsWith('text/') && file.type !== 'application/pdf') {
         toast({
           variant: 'destructive',
           title: 'Unsupported File Type',
-          description: 'Please upload a plain text file (.txt, .md) or a PDF.',
+          description: `Skipping '${file.name}'. Please upload text or PDF files.`,
         });
-        return;
+        continue;
       }
-      setDocumentName(file.name);
-      setAskResult(null); // Clear previous results
-      setIsLoading(true);
-
-      const processFile = async () => {
-        try {
-          let textContent = '';
-          if (file.type === 'application/pdf') {
-            const formData = new FormData();
-            formData.append('file', file);
-            const result = await parsePdfAction(formData);
-            if (result.error || !result.data) {
-              throw new Error(result.error || 'Failed to parse PDF.');
-            }
-            textContent = result.data.documentContent;
-          } else {
-            textContent = await file.text();
+      
+      try {
+        let textContent = '';
+        if (file.type === 'application/pdf') {
+          const formData = new FormData();
+          formData.append('file', file);
+          const result = await parsePdfAction(formData);
+          if (result.error || !result.data) {
+            throw new Error(result.error || 'Failed to parse PDF.');
           }
-          setDocumentContent(textContent);
-        } catch (error) {
-           console.error("Error processing file:", error);
-           toast({
-             variant: 'destructive',
-             title: 'File Processing Error',
-             description: error instanceof Error ? error.message : 'Could not read or parse the uploaded file.',
-           });
-           setDocumentContent('');
-           setDocumentName('');
-        } finally {
-          setIsLoading(false);
+          textContent = result.data.documentContent;
+        } else {
+          textContent = await file.text();
         }
+        newFiles.push({ name: file.name, content: textContent });
+      } catch (error) {
+         console.error("Error processing file:", error);
+         toast({
+           variant: 'destructive',
+           title: 'File Processing Error',
+           description: error instanceof Error ? `Could not process ${file.name}: ${error.message}` : `Could not read or parse ${file.name}.`,
+         });
       }
-      processFile();
+    }
+
+    setDocumentFiles(prevFiles => [...prevFiles, ...newFiles]);
+    setIsLoading(false);
+
+    // Clear the file input so the same files can be re-uploaded if needed
+    if(fileInputRef.current) {
+        fileInputRef.current.value = '';
     }
   };
+
+  const removeFile = (fileName: string) => {
+    setDocumentFiles(files => files.filter(file => file.name !== fileName));
+  }
 
   const handleAskDocument = async () => {
     setIsLoading(true);
     setSummaryResult(null);
     setImprovementResult(null);
-    const result = await askDocumentAction(documentContent, documentQuery, language);
+    const result = await askDocumentAction(documentFiles, documentQuery, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -255,14 +278,22 @@ export default function Home() {
               <Bot className="text-primary" />
               AI Answer
             </CardTitle>
-            <CardDescription>
-              This answer is generated by AI based on your query and the uploaded document.
+             <CardDescription>
+              This answer is generated by AI based on your query and the uploaded documents.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+          <CardContent className="space-y-4">
+             <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
               {askResult.answer}
             </div>
+            {askResult.sourceFile && (
+              <div className="pt-4">
+                <Badge variant="secondary">
+                  <FileText className="mr-1.5 h-3 w-3" />
+                  Source: {askResult.sourceFile}
+                </Badge>
+              </div>
+            )}
           </CardContent>
         </Card>
       );
@@ -450,33 +481,53 @@ export default function Home() {
       return (
         <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
           <CardHeader>
-            <CardTitle>Ask a Document</CardTitle>
+            <CardTitle>Ask Document(s)</CardTitle>
             <CardDescription>
-              Upload a document and ask a question to get an AI-powered answer.
+              Upload up to 5 documents to get AI-powered answers from their content.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="doc-upload" className="font-semibold">Upload Document</label>
+              <label htmlFor="doc-upload" className="font-semibold">Upload Documents</label>
               <Input
                 id="doc-upload"
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
-                accept="text/*,application/pdf"
+                accept="text/*,application/pdf,.md"
+                multiple
+                disabled={documentFiles.length >= 5}
               />
               <Button
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full"
-                disabled={isLoading}
+                disabled={isLoading || documentFiles.length >= 5}
               >
                 <UploadCloud className="mr-2" />
-                {isLoading && !documentContent ? 'Processing...' : (documentName ? `Selected: ${documentName}` : 'Select a file')}
+                {isLoading ? 'Processing...' : (documentFiles.length >= 5 ? 'Maximum files reached' : 'Select files (up to 5)')}
               </Button>
             </div>
-              {documentContent && (
+            {documentFiles.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Uploaded Files:</p>
+                <div className="space-y-2">
+                  {documentFiles.map((file) => (
+                    <div key={file.name} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
+                      <div className="flex items-center gap-2 truncate">
+                        <FileText className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{file.name}</span>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeFile(file.name)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+              {documentFiles.length > 0 && (
               <>
                 <div className="space-y-2">
                   <label htmlFor="doc-query" className="font-semibold">Your Question</label>
@@ -485,7 +536,7 @@ export default function Home() {
                       <TooltipTrigger asChild>
                         <Input
                           id="doc-query"
-                          placeholder="Ask anything about the document..."
+                          placeholder="Ask anything about the documents..."
                           value={documentQuery}
                           onChange={(e) => setDocumentQuery(e.target.value)}
                         />

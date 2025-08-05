@@ -11,6 +11,7 @@ import {
 import {
   askDocument,
   type AskDocumentOutput,
+  type DocumentContext,
 } from '@/ai/flows/ask-document';
 import { translateText, type TranslateTextOutput } from '@/ai/flows/translate-text';
 import { parsePdf } from '@/lib/pdf-parser';
@@ -70,27 +71,28 @@ export async function parsePdfAction(formData: FormData): Promise<{
 }
 
 export async function askDocumentAction(
-  documentContent: string,
+  documents: DocumentContext[],
   userQuery: string,
   language: string,
 ): Promise<{ data: AskDocumentOutput | null; error: string | null }> {
-  if (!documentContent || !userQuery) {
+  if (!documents || documents.length === 0 || !userQuery) {
     return {
       data: null,
-      error: 'Document content and user query are required.',
+      error: 'Documents and a user query are required.',
     };
   }
 
   try {
     const translatedQuery = await translate(userQuery, 'en');
     const result = await askDocument({
-      documentContent,
+      documents,
       userQuery: translatedQuery,
     });
     
     const translatedAnswer = await translate(result.answer, language);
+    const translatedSource = result.sourceFile ? await translate(result.sourceFile, language) : '';
 
-    return { data: { answer: translatedAnswer }, error: null };
+    return { data: { ...result, answer: translatedAnswer, sourceFile: translatedSource }, error: null };
   } catch (e) {
     console.error('askDocumentAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
