@@ -17,11 +17,10 @@ export async function POST(req: Request) {
     const base64Data = dataUri.split(',')[1];
     const buffer = Buffer.from(base64Data, 'base64');
     
-    // Remove the fragile pagerender option and rely on the default text extraction.
     const data = await pdf(buffer);
 
-    // `data.text` will now have page breaks. We will make them more explicit for the AI.
-    // The form feed character ('\f') is the default page delimiter from pdf-parse.
+    // `data.text` can have page breaks. We will make them more explicit for the AI.
+    // The form feed character ('\f') is a common page delimiter from pdf-parse.
     const pages = data.text.split('\f'); 
     let paginatedText = '';
     pages.forEach((pageContent, i) => {
