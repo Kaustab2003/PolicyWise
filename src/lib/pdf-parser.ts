@@ -3,8 +3,8 @@
 import { Worker } from 'worker_threads';
 import path from 'path';
 
-// Note: In a Next.js server environment, __dirname points to the .next/server/app directory.
-// We need to construct the path to our worker file from there.
+// Note: In a Next.js server environment, we need to construct the path 
+// to our worker file from the current working directory.
 const workerPath = path.resolve(process.cwd(), '.next/server/app/lib/pdf-parser-worker.js');
 
 export async function parsePdf(buffer: Buffer): Promise<string> {
