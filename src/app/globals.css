@@ -20,8 +20,8 @@ body {
     --secondary-foreground: 240 5.9% 10%;
     --muted: 220 14% 90%;
     --muted-foreground: 240 3.8% 46.1%;
-    --accent: 45 93% 47%;
-    --accent-foreground: 45 93% 7%;
+    --accent: 330 80% 60%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 13% 85%;
@@ -41,36 +41,36 @@ body {
     --sidebar-ring: 260 60% 65%;
   }
   .dark {
-    --background: 224 10% 10%;
-    --foreground: 210 40% 98%;
-    --card: 225 10% 12%;
+    --background: 220 10% 8%; /* Near-black charcoal */
+    --foreground: 210 40% 98%; /* White */
+    --card: 220 10% 11%;       /* Slightly lighter charcoal for cards */
     --card-foreground: 210 40% 98%;
-    --popover: 224 10% 10%;
+    --popover: 220 10% 8%;
     --popover-foreground: 210 40% 98%;
-    --primary: 260 60% 65%;
+    --primary: 250 60% 60%;      /* Vibrant Purple */
     --primary-foreground: 210 40% 98%;
     --secondary: 217 10% 22%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217 10% 22%;
+    --muted: 220 10% 16%; /* Muted background for elements like accordions */
     --muted-foreground: 215 20% 65%;
-    --accent: 45 93% 57%;
-    --accent-foreground: 45 93% 7%;
+    --accent: 330 80% 60%;        /* Bright Pink/Magenta for accents */
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 63% 41%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 10% 22%;
-    --input: 217 10% 22%;
-    --ring: 260 60% 65%;
+    --border: 220 10% 20%; /* Border for cards and inputs */
+    --input: 220 10% 16%;
+    --ring: 250 60% 60%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar: 224 10% 10%;
+    --sidebar: 220 10% 8%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-border: 217 10% 22%;
-    --sidebar-accent: 260 60% 65%;
+    --sidebar-border: 220 10% 20%;
+    --sidebar-accent: 250 60% 60%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-ring: 260 60% 65%;
+    --sidebar-ring: 250 60% 60%;
   }
 }
 
