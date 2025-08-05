@@ -1064,22 +1064,6 @@ export default function Home() {
         </div>
       );
     }
-
-    let emptyStateIcon = <FileSearch className="h-12 w-12 text-primary" />;
-    if (activeTab === 'ask') {
-      emptyStateIcon = <FileQuestion className="h-12 w-12 text-primary" />;
-    } else if (activeTab === 'translate') {
-      emptyStateIcon = <MessageSquareQuote className="h-12 w-12 text-primary" />;
-    } else if (activeTab === 'improve') {
-      emptyStateIcon = <Sparkles className="h-12 w-12 text-primary" />;
-    } else if (activeTab === 'summarize') {
-      emptyStateIcon = <FileText className="h-12 w-12 text-primary" />;
-    } else if (activeTab === 'compliance') {
-      emptyStateIcon = <ShieldCheck className="h-12 w-12 text-primary" />;
-    } else if (activeTab === 'risk') {
-      emptyStateIcon = <AlertTriangle className="h-12 w-12 text-primary" />;
-    }
-
     return <EmptyState />;
   };
 
@@ -1698,6 +1682,13 @@ export default function Home() {
 
 const EmptyState = () => (
   <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 fade-in-up">
+    <div className="relative flex items-center justify-center">
+      <div className="orb-container animate-orb-rotate">
+        <div className="orb-outer-glow animate-glow-pulse" />
+      </div>
+      <div className="orb-core animate-orb-pulse" />
+      <Bot className="h-12 w-12 text-primary absolute" />
+    </div>
     <h3 className="text-lg font-semibold text-foreground mt-8">Ready for Analysis</h3>
     <p className="mt-1">
       Your results will be displayed here once you submit an item for analysis.

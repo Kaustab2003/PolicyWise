@@ -137,11 +137,23 @@ body {
     border-radius: 50%;
   }
 
+  .ai-background-advanced {
+    background: 
+      radial-gradient(ellipse 800px 600px at center, 
+        hsl(280, 50%, 20%) 0%,
+        transparent 50%
+      ),
+      linear-gradient(135deg, 
+        hsl(260, 80%, 8%) 0%,
+        hsl(280, 60%, 5%) 50%,
+        hsl(240, 90%, 3%) 100%
+      );
+  }
+  
   .orb-container {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
+    width: 300px;
+    height: 300px;
   }
   
   .orb-outer-glow {
@@ -152,11 +164,29 @@ body {
     -moz-backface-visibility: hidden;
     -webkit-transform: translate3d(0, 0, 0);
     -moz-transform: translate3d(0, 0, 0);
+    background: radial-gradient(circle,
+      hsla(280, 100%, 60%, 0.3) 0%,
+      hsla(260, 80%, 50%, 0.2) 40%,
+      transparent 70%
+    );
+    filter: blur(2px);
   }
   
   .orb-core {
-    position: relative;
+    position: absolute;
+    top: 25%;
+    left: 25%;
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
+     background: radial-gradient(circle,
+      hsl(290, 100%, 75%) 0%,
+      hsl(270, 90%, 55%) 50%,
+      hsl(250, 70%, 35%) 100%
+    );
+    box-shadow: 
+      0 0 30px hsl(280, 100%, 60%),
+      inset 0 0 20px hsl(290, 100%, 50%);
   }
   
   @keyframes particle-float {
@@ -170,8 +200,8 @@ body {
   }
   
   @keyframes glow-pulse {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.4; }
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
   }
 
   @keyframes orb-pulse {
