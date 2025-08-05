@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
@@ -32,6 +32,14 @@ import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ThemeSwitcher } from '@/components/theme-switcher';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export const maxDuration = 120;
 
@@ -82,6 +90,7 @@ export default function Home() {
     useState<GenerateSummaryFromQueryOutput | null>(null);
   const [improvementResult, setImprovementResult] =
     useState<SuggestPolicyImprovementsOutput | null>(null);
+  const improvementResultRef = useRef<HTMLDivElement>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -356,6 +365,73 @@ export default function Home() {
     }
   };
 
+  const handlePrint = () => {
+    const printWindow = window.open('', '', 'height=600,width=800');
+    if (printWindow && improvementResultRef.current) {
+      printWindow.document.write('<html><head><title>Policy Improvements</title>');
+      // Optional: Add some basic styling
+      printWindow.document.write('<style>body { font-family: sans-serif; } .prose { white-space: pre-wrap; }</style>');
+      printWindow.document.write('</head><body>');
+      printWindow.document.write(improvementResultRef.current.innerHTML);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }
+  };
+
+  const handleDownload = (format: 'txt' | 'pdf' | 'jpg') => {
+    if (!improvementResultRef.current || !improvementResult) return;
+
+    const contentElement = improvementResultRef.current;
+    const filename = 'policy-improvements';
+
+    if (format === 'txt') {
+      const blob = new Blob([improvementResult.suggestedImprovements], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else if (format === 'jpg' || format === 'pdf') {
+      html2canvas(contentElement, {
+          onclone: (document) => {
+            // Un-invert prose styles for light background canvas
+            const proseElement = document.querySelector('.dark\\:prose-invert');
+            if (proseElement) {
+              proseElement.classList.remove('dark:prose-invert');
+            }
+          },
+          backgroundColor: window.getComputedStyle(document.body).getPropertyValue('background-color'),
+          scale: 2,
+        }).then(canvas => {
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        
+        if (format === 'jpg') {
+          const a = document.createElement('a');
+          a.href = imgData;
+          a.download = `${filename}.jpg`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } else { // pdf
+          const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+          });
+          pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+          pdf.save(`${filename}.pdf`);
+        }
+      });
+    }
+  };
+
+
   const renderResults = () => {
     if (isLoading && !askResult && !summaryResult && !improvementResult && !translationResult && !summarizeResult) {
       return <ResultsSkeleton />;
@@ -514,16 +590,49 @@ export default function Home() {
       return (
         <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BrainCircuit className="text-primary" />
-              Suggested Improvements
-            </CardTitle>
-             <CardDescription>
-              AI-powered suggestions to improve clarity, completeness, and fairness.
-            </CardDescription>
+             <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <CardTitle className="flex items-center gap-2">
+                  <BrainCircuit className="text-primary" />
+                  Suggested Improvements
+                </CardTitle>
+                <CardDescription>
+                  AI-powered suggestions to improve clarity, completeness, and fairness.
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" onClick={handlePrint}>
+                      <Printer />
+                      <span className="sr-only">Print</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Print</TooltipContent>
+                </Tooltip>
+                <DropdownMenu>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <Download />
+                          <span className="sr-only">Download</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>Download</TooltipContent>
+                  </Tooltip>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onSelect={() => handleDownload('txt')}>Save as TXT</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => handleDownload('jpg')}>Save as JPG</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => handleDownload('pdf')}>Save as PDF</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+            <div ref={improvementResultRef} className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
               {improvementResult.suggestedImprovements}
             </div>
           </CardContent>
