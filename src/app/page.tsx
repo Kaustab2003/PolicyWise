@@ -707,7 +707,7 @@ export default function Home() {
         }
       };
       return (
-        <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <div className="space-y-6 fade-in-up">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -753,7 +753,7 @@ export default function Home() {
     
     if (activeTab === 'compliance' && complianceResult) {
       return (
-        <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <div className="space-y-6 fade-in-up">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -808,7 +808,7 @@ export default function Home() {
 
     if (activeTab === 'summarize' && summarizeResult) {
       return (
-        <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <div className="space-y-6 fade-in-up">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -854,7 +854,7 @@ export default function Home() {
 
     if (activeTab === 'translate' && translationResult) {
       return (
-        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <Card className="fade-in-up">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bot className="text-primary" />
@@ -875,7 +875,7 @@ export default function Home() {
 
     if (activeTab === 'ask' && askHistory.length > 0) {
        return (
-        <div className="space-y-4 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <div className="space-y-4 fade-in-up">
           {askHistory.map((turn, index) => (
             <div key={turn.id} className="flex gap-3">
               <div className="p-1.5 bg-muted rounded-full h-fit">
@@ -933,7 +933,7 @@ export default function Home() {
 
     if (activeTab === 'query' && summaryResult) {
       return (
-        <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <div className="space-y-6 fade-in-up">
           {summaryResult.answers.map((item, index) => (
              <div key={index} className="space-y-6">
               <Card>
@@ -985,7 +985,7 @@ export default function Home() {
 
     if (activeTab === 'improve' && improvementResult) {
       return (
-        <div ref={improvementResultRef} className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <div ref={improvementResultRef} className="space-y-6 fade-in-up">
             {/* Report Summary Card */}
             <Card>
                 <CardHeader>
@@ -1151,7 +1151,7 @@ export default function Home() {
   };
 
   const renderCurrentTab = () => {
-    const commonButtonClasses = "w-full transition-all transform hover:scale-105 hover:brightness-110 hover:saturate-125 active:scale-100";
+    const commonButtonClasses = "w-full";
 
     const FileUploadDisplay = ({ file, onRemove, onTriggerClick, isLoading }: { file: DocumentContext | null, onRemove: () => void, onTriggerClick: () => void, isLoading: boolean }) => (
       <div className="space-y-2">
@@ -1183,7 +1183,7 @@ export default function Home() {
 
     if (activeTab === 'risk') {
       return (
-        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <Card className="fade-in-up">
           <CardHeader>
             <CardTitle>Risk Detection</CardTitle>
             <CardDescription>
@@ -1220,7 +1220,7 @@ export default function Home() {
             <Button
               onClick={handleRiskDetection}
               disabled={isLoading || (!policy && !riskFile)}
-              className={cn(commonButtonClasses, "bg-primary hover:bg-primary/90 text-primary-foreground")}
+              className={cn(commonButtonClasses)}
             >
               {isLoading && activeTab === 'risk' ? 'Detecting...' : <><AlertTriangle className="mr-2"/>Detect Risks</>}
             </Button>
@@ -1231,7 +1231,7 @@ export default function Home() {
     
     if (activeTab === 'compliance') {
       return (
-        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <Card className="fade-in-up">
           <CardHeader>
             <CardTitle>Compliance Checker</CardTitle>
             <CardDescription>
@@ -1283,7 +1283,7 @@ export default function Home() {
 
     if (activeTab === 'query') {
       return (
-        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <Card className="fade-in-up">
           <CardHeader>
             <CardTitle>Analyze a Policy</CardTitle>
             <CardDescription>
@@ -1347,7 +1347,7 @@ export default function Home() {
             <Button
               onClick={handleSummarize}
               disabled={isLoading || !policy || queries.length === 0}
-              className={cn(commonButtonClasses, "bg-primary hover:bg-primary/90 text-primary-foreground")}
+              className={cn(commonButtonClasses)}
             >
               {isLoading && activeTab === 'query' ? 'Analyzing...' : <><FileSearch className="mr-2"/>Analyze Queries</>}
             </Button>
@@ -1358,7 +1358,7 @@ export default function Home() {
 
     if (activeTab === 'improve') {
       return (
-        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <Card className="fade-in-up">
           <CardHeader>
             <CardTitle>Improve a Policy Draft</CardTitle>
             <CardDescription>
@@ -1406,7 +1406,7 @@ export default function Home() {
 
     if (activeTab === 'ask') {
       return (
-        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <Card className="fade-in-up">
           <CardHeader>
             <CardTitle>Ask Document(s)</CardTitle>
             <CardDescription>
@@ -1483,7 +1483,7 @@ export default function Home() {
                 <Button
                   onClick={handleAskDocument}
                   disabled={isLoading || documentQuery.trim() === ''}
-                  className={cn(commonButtonClasses, "bg-primary hover:bg-primary/90 text-primary-foreground")}
+                  className={cn(commonButtonClasses)}
                 >
                   {isLoading ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
                 </Button>
@@ -1496,7 +1496,7 @@ export default function Home() {
 
     if (activeTab === 'summarize') {
       return (
-        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <Card className="fade-in-up">
           <CardHeader>
             <CardTitle>Summarize a Document</CardTitle>
             <CardDescription>
@@ -1556,7 +1556,7 @@ export default function Home() {
     
     if (activeTab === 'translate') {
        return (
-        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+        <Card className="fade-in-up">
           <CardHeader>
             <CardTitle>Translate Text</CardTitle>
             <CardDescription>
@@ -1577,7 +1577,7 @@ export default function Home() {
             <Button
               onClick={handleTranslate}
               disabled={isLoading || !textToTranslate}
-              className={cn(commonButtonClasses, "bg-primary hover:bg-primary/90 text-primary-foreground")}
+              className={cn(commonButtonClasses)}
             >
               {isLoading && activeTab === 'translate' ? 'Translating...' : <><MessageSquareQuote className="mr-2" />Translate Text</>}
             </Button>
@@ -1697,7 +1697,7 @@ export default function Home() {
 }
 
 const EmptyState = ({ icon }: { icon: React.ReactNode }) => (
-  <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 animate-in fade-in-50 duration-500">
+  <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 fade-in-up">
     <div className="p-4 rounded-full bg-muted mb-4">
       {icon}
     </div>
