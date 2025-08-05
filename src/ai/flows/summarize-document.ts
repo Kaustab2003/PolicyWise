@@ -42,10 +42,11 @@ const prompt = ai.definePrompt({
   name: 'summarizeDocumentPrompt',
   input: {schema: z.any()},
   output: {schema: SummarizeDocumentOutputSchema},
-  prompt: `You are an expert at summarizing documents. Analyze the following document content and provide a concise summary and a list of key points.
+  prompt: `You are an expert at summarizing documents for a general audience. Your goal is to make complex information accessible and easy to understand.
 
-The summary should capture the key points and main ideas of the document.
-The key points should be a list of the most important individual takeaways.
+Analyze the following document and provide:
+1.  A detailed, elaborate summary. The summary should be well-structured, using clear headings or sections if appropriate. Explain the document's purpose, main topics, and any conclusions in simple terms. Avoid jargon where possible.
+2.  A list of the most important key points as individual takeaways.
 
 Generate the summary and key points in the language with the ISO 639-1 code: "{{targetLanguage}}".
 
