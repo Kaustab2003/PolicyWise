@@ -308,5 +308,3 @@ export async function improveAction(
     };
   }
 }
-
-    
