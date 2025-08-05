@@ -6,9 +6,9 @@ if (!parentPort) {
   throw new Error('This file must be run as a worker thread.');
 }
 
-parentPort.on('message', async (bufferData: ArrayBuffer) => {
+parentPort.on('message', async (bufferData: Buffer) => {
   try {
-    const data = await pdf(Buffer.from(bufferData));
+    const data = await pdf(bufferData);
     parentPort.postMessage({ success: true, text: data.text });
   } catch (error) {
     // We can't post the full error object, as it's not always cloneable.

@@ -85,7 +85,7 @@ export async function parsePdfAction(formData: FormData): Promise<{
     const arrayBuffer = await file.arrayBuffer();
     // Add another layer of aggressive try-catch specifically for pdf-parse
     try {
-      const documentContent = await parsePdf(arrayBuffer);
+      const documentContent = await parsePdf(Buffer.from(arrayBuffer));
       return { data: { documentContent }, error: null };
     } catch (parseError) {
       console.error('PDF parsing itself failed:', parseError);
