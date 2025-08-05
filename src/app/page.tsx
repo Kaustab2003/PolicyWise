@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export const maxDuration = 120;
 
@@ -366,29 +367,59 @@ export default function Home() {
   };
 
   const handlePrint = () => {
-    const printWindow = window.open('', '', 'height=600,width=800');
-    if (printWindow && improvementResultRef.current) {
-      printWindow.document.write('<html><head><title>Policy Improvements</title>');
-      // Optional: Add some basic styling
-      printWindow.document.write('<style>body { font-family: sans-serif; } .prose { white-space: pre-wrap; }</style>');
+    if (!improvementResultRef.current) return;
+    const printContent = improvementResultRef.current.innerHTML;
+
+    const printWindow = window.open('', '', 'height=800,width=800');
+    if (printWindow) {
+      printWindow.document.write('<html><head><title>Policy Improvement Report</title>');
+      // A simple stylesheet for printing.
+      printWindow.document.write(`
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; }
+          .prose { max-width: 100%; }
+          .prose h1, .prose h2, .prose h3 { margin-bottom: 0.5em; }
+          .prose p { margin-top: 0; }
+          .prose ul, .prose ol { padding-left: 2em; }
+          .prose pre { white-space: pre-wrap; background-color: #f3f4f6; padding: 1em; border-radius: 0.5em; }
+          .card { border: 1px solid #e5e7eb; border-radius: 0.75rem; margin-bottom: 1.5rem; }
+          .card-header { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; }
+          .card-title { font-size: 1.25rem; font-weight: 600; }
+          .card-content { padding: 1.5rem; }
+        </style>
+      `);
       printWindow.document.write('</head><body>');
-      printWindow.document.write(improvementResultRef.current.innerHTML);
+      printWindow.document.write(printContent);
       printWindow.document.write('</body></html>');
       printWindow.document.close();
       printWindow.focus();
-      printWindow.print();
-      printWindow.close();
+      // Use a timeout to ensure content is loaded before printing
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
     }
   };
 
   const handleDownload = (format: 'txt' | 'pdf' | 'jpg') => {
     if (!improvementResultRef.current || !improvementResult) return;
-
+  
     const contentElement = improvementResultRef.current;
-    const filename = 'policy-improvements';
-
+    const filename = 'policy-improvement-report';
+  
     if (format === 'txt') {
-      const blob = new Blob([improvementResult.suggestedImprovements], { type: 'text/plain' });
+      // Create a plain text version of the report
+      const { summary, improvements } = improvementResult;
+      let textContent = `POLICY IMPROVEMENT REPORT\n\n`;
+      textContent += `SUMMARY:\n${summary}\n\n`;
+      textContent += `----------------------------------------\n\n`;
+      textContent += `DETAILED SUGGESTIONS:\n\n`;
+      improvements.forEach(item => {
+        textContent += `TITLE: ${item.title}\n`;
+        textContent += `DETAILS:\n${item.details}\n\n`;
+      });
+  
+      const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -398,36 +429,36 @@ export default function Home() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } else if (format === 'jpg' || format === 'pdf') {
-      html2canvas(contentElement, {
-          onclone: (document) => {
-            // Un-invert prose styles for light background canvas
-            const proseElement = document.querySelector('.dark\\:prose-invert');
-            if (proseElement) {
-              proseElement.classList.remove('dark:prose-invert');
-            }
-          },
-          backgroundColor: window.getComputedStyle(document.body).getPropertyValue('background-color'),
-          scale: 2,
-        }).then(canvas => {
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-        
-        if (format === 'jpg') {
-          const a = document.createElement('a');
-          a.href = imgData;
-          a.download = `${filename}.jpg`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        } else { // pdf
-          const pdf = new jsPDF({
-            orientation: 'p',
-            unit: 'px',
-            format: [canvas.width, canvas.height]
-          });
-          pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
-          pdf.save(`${filename}.pdf`);
-        }
-      });
+       html2canvas(contentElement, {
+         onclone: (document) => {
+           // Un-invert prose styles for light background canvas
+           const proseElement = document.querySelector('.dark\\:prose-invert');
+           if (proseElement) {
+             proseElement.classList.remove('dark:prose-invert');
+           }
+         },
+         backgroundColor: window.getComputedStyle(document.body).getPropertyValue('background-color'),
+         scale: 2,
+       }).then(canvas => {
+         const imgData = canvas.toDataURL('image/jpeg', 1.0);
+         
+         if (format === 'jpg') {
+           const a = document.createElement('a');
+           a.href = imgData;
+           a.download = `${filename}.jpg`;
+           document.body.appendChild(a);
+           a.click();
+           document.body.removeChild(a);
+         } else { // pdf
+           const pdf = new jsPDF({
+             orientation: 'p',
+             unit: 'px',
+             format: [canvas.width, canvas.height]
+           });
+           pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+           pdf.save(`${filename}.pdf`);
+         }
+       });
     }
   };
 
@@ -594,10 +625,10 @@ export default function Home() {
               <div className="flex-1">
                 <CardTitle className="flex items-center gap-2">
                   <BrainCircuit className="text-primary" />
-                  Suggested Improvements
+                  Policy Improvement Report
                 </CardTitle>
                 <CardDescription>
-                  AI-powered suggestions to improve clarity, completeness, and fairness.
+                  AI-powered analysis and suggestions for your policy.
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -608,7 +639,7 @@ export default function Home() {
                       <span className="sr-only">Print</span>
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Print</TooltipContent>
+                  <TooltipContent>Print Report</TooltipContent>
                 </Tooltip>
                 <DropdownMenu>
                   <Tooltip>
@@ -616,11 +647,11 @@ export default function Home() {
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="icon">
                           <Download />
-                          <span className="sr-only">Download</span>
+                          <span className="sr-only">Download Report</span>
                         </Button>
                       </DropdownMenuTrigger>
                     </TooltipTrigger>
-                    <TooltipContent>Download</TooltipContent>
+                    <TooltipContent>Download Report</TooltipContent>
                   </Tooltip>
                   <DropdownMenuContent>
                     <DropdownMenuItem onSelect={() => handleDownload('txt')}>Save as TXT</DropdownMenuItem>
@@ -631,9 +662,44 @@ export default function Home() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div ref={improvementResultRef} className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-              {improvementResult.suggestedImprovements}
+          <CardContent ref={improvementResultRef}>
+            <div className="space-y-6">
+                {/* Summary Section */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                            <FileSignature className="text-primary"/>
+                            Analysis Summary
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="prose prose-sm dark:prose-invert max-w-none">
+                        <p>{improvementResult.summary}</p>
+                    </CardContent>
+                </Card>
+
+                {/* Detailed Suggestions Section */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                            <Sparkles className="text-accent"/>
+                            Detailed Suggestions
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Accordion type="single" collapsible className="w-full" defaultValue="item-0">
+                            {improvementResult.improvements.map((item, index) => (
+                                <AccordionItem value={`item-${index}`} key={index}>
+                                    <AccordionTrigger className="text-left font-semibold hover:no-underline">
+                                        {item.title}
+                                    </AccordionTrigger>
+                                    <AccordionContent className="prose prose-sm dark:prose-invert max-w-none pt-2">
+                                        <p>{item.details}</p>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            ))}
+                        </Accordion>
+                    </CardContent>
+                </Card>
             </div>
           </CardContent>
         </Card>

@@ -168,9 +168,16 @@ export async function improveAction(
       policyDocument,
     });
     
-    const translatedImprovements = await translate(result.suggestedImprovements, language);
+    const translatedSummary = await translate(result.summary, language);
+    const translatedImprovements = await Promise.all(
+      result.improvements.map(async (item) => ({
+        ...item,
+        title: await translate(item.title, language),
+        details: await translate(item.details, language),
+      }))
+    );
 
-    return { data: { suggestedImprovements: translatedImprovements }, error: null };
+    return { data: { summary: translatedSummary, improvements: translatedImprovements }, error: null };
   } catch (e) {
     console.error('improveAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
