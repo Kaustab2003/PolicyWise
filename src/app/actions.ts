@@ -83,8 +83,17 @@ export async function parsePdfAction(formData: FormData): Promise<{
 
   try {
     const arrayBuffer = await file.arrayBuffer();
-    const documentContent = await parsePdf(arrayBuffer);
-    return { data: { documentContent }, error: null };
+    // Add another layer of aggressive try-catch specifically for pdf-parse
+    try {
+      const documentContent = await parsePdf(arrayBuffer);
+      return { data: { documentContent }, error: null };
+    } catch (parseError) {
+      console.error('PDF parsing itself failed:', parseError);
+      return {
+        data: null,
+        error: 'Failed to parse PDF. The file may be corrupt or malformed.',
+      };
+    }
   } catch (e) {
     console.error('parsePdfAction failed:', e);
     const errorMessage =
@@ -95,6 +104,7 @@ export async function parsePdfAction(formData: FormData): Promise<{
     };
   }
 }
+
 
 export async function askDocumentAction(
   documents: DocumentContext[],
