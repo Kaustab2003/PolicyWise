@@ -411,9 +411,9 @@ export default function Home() {
       // Create a plain text version of the report
       const { summary, improvements } = improvementResult;
       let textContent = `POLICY IMPROVEMENT REPORT\n\n`;
-      textContent += `SUMMARY:\n${summary}\n\n`;
+      textContent += `ANALYSIS SUMMARY:\n${summary}\n\n`;
       textContent += `----------------------------------------\n\n`;
-      textContent += `DETAILED SUGGESTIONS:\n\n`;
+      textContent += `IMPROVEMENT SUGGESTIONS:\n\n`;
       improvements.forEach(item => {
         textContent += `TITLE: ${item.title}\n`;
         textContent += `DETAILS:\n${item.details}\n\n`;
@@ -619,90 +619,83 @@ export default function Home() {
 
     if (activeTab === 'improve' && improvementResult) {
       return (
-        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
-          <CardHeader>
-             <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <CardTitle className="flex items-center gap-2">
-                  <BrainCircuit className="text-primary" />
-                  Policy Improvement Report
-                </CardTitle>
-                <CardDescription>
-                  AI-powered analysis and suggestions for your policy.
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" onClick={handlePrint}>
-                      <Printer />
-                      <span className="sr-only">Print</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Print Report</TooltipContent>
-                </Tooltip>
-                <DropdownMenu>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon">
-                          <Download />
-                          <span className="sr-only">Download Report</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent>Download Report</TooltipContent>
-                  </Tooltip>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onSelect={() => handleDownload('txt')}>Save as TXT</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => handleDownload('jpg')}>Save as JPG</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => handleDownload('pdf')}>Save as PDF</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent ref={improvementResultRef}>
-            <div className="space-y-6">
-                {/* Summary Section */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-xl">
-                            <FileSignature className="text-primary"/>
-                            Analysis Summary
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="prose prose-sm dark:prose-invert max-w-none">
-                        <p>{improvementResult.summary}</p>
-                    </CardContent>
-                </Card>
+        <div ref={improvementResultRef} className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+            {/* Report Summary Card */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <FileSignature className="text-primary"/>
+                        Analysis Report
+                    </CardTitle>
+                    <CardDescription>
+                        A high-level summary of the policy's quality.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="prose prose-sm dark:prose-invert max-w-none">
+                    <p>{improvementResult.summary}</p>
+                </CardContent>
+            </Card>
 
-                {/* Detailed Suggestions Section */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-xl">
-                            <Sparkles className="text-accent"/>
-                            Detailed Suggestions
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <Accordion type="single" collapsible className="w-full" defaultValue="item-0">
-                            {improvementResult.improvements.map((item, index) => (
-                                <AccordionItem value={`item-${index}`} key={index}>
-                                    <AccordionTrigger className="text-left font-semibold hover:no-underline">
-                                        {item.title}
-                                    </AccordionTrigger>
-                                    <AccordionContent className="prose prose-sm dark:prose-invert max-w-none pt-2">
-                                        <p>{item.details}</p>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
-                    </CardContent>
-                </Card>
-            </div>
-          </CardContent>
-        </Card>
+            {/* Improvement Suggestions Card */}
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                            <CardTitle className="flex items-center gap-2">
+                                <Sparkles className="text-accent"/>
+                                Improvement Suggestions
+                            </CardTitle>
+                            <CardDescription>
+                                Detailed suggestions to improve your policy.
+                            </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="outline" size="icon" onClick={handlePrint}>
+                                        <Printer/>
+                                        <span className="sr-only">Print</span>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Print Report</TooltipContent>
+                            </Tooltip>
+                            <DropdownMenu>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" size="icon">
+                                                <Download/>
+                                                <span className="sr-only">Download Report</span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Download Report</TooltipContent>
+                                </Tooltip>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem onSelect={() => handleDownload('txt')}>Save as TXT</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => handleDownload('jpg')}>Save as JPG</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => handleDownload('pdf')}>Save as PDF</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Accordion type="single" collapsible className="w-full" defaultValue="item-0">
+                        {improvementResult.improvements.map((item, index) => (
+                            <AccordionItem value={`item-${index}`} key={index}>
+                                <AccordionTrigger className="text-left font-semibold hover:no-underline">
+                                    {item.title}
+                                </AccordionTrigger>
+                                <AccordionContent className="prose prose-sm dark:prose-invert max-w-none pt-2">
+                                    <p>{item.details}</p>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                </CardContent>
+            </Card>
+        </div>
       );
     }
 
