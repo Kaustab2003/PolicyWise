@@ -12,7 +12,7 @@ import {z} from 'genkit';
 
 const DocumentContextSchema = z.object({
   name: z.string().describe('The name of the document file.'),
-  content: z.string().describe("The full text content of the document, or a base64-encoded data URI for images (e.g., 'data:image/jpeg;base64,...')."),
+  content: z.string().describe("A data URI representing the document content (e.g., 'data:image/jpeg;base64,...' or 'data:application/pdf;base64,...')."),
 });
 export type DocumentContext = z.infer<typeof DocumentContextSchema>;
 
@@ -56,11 +56,7 @@ Respond with an array of answer objects, one for each user question.
 {{#each documents}}
 Document Name: {{{name}}}
 Content:
-{{#if (content.startsWith "data:image")}}
 {{media url=content}}
-{{else}}
-{{{content}}}
-{{/if}}
 ---
 {{/each}}
 

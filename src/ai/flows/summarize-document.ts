@@ -14,7 +14,7 @@ const SummarizeDocumentInputSchema = z.object({
   documentContent: z
     .string()
     .describe(
-      'The text content or a base64-encoded data URI of an image to be summarized.'
+      "A data URI representing the document content (e.g., 'data:image/jpeg;base64,...' or 'data:application/pdf;base64,...')."
     ),
   targetLanguage: z
     .string()
@@ -48,7 +48,8 @@ The summary should capture the key points and main ideas of the document.
 Generate the summary in the language with the ISO 639-1 code: "{{targetLanguage}}".
 
 Document Content:
-{{{documentContent}}}`,
+{{media url=documentContent}}
+`,
 });
 
 const summarizeDocumentFlow = ai.defineFlow(
@@ -58,19 +59,7 @@ const summarizeDocumentFlow = ai.defineFlow(
     outputSchema: SummarizeDocumentOutputSchema,
   },
   async (input) => {
-    let promptInput: any;
-    if (input.documentContent.startsWith('data:image')) {
-      promptInput = {
-        targetLanguage: input.targetLanguage,
-        documentContent: {media: {url: input.documentContent}},
-      };
-    } else {
-      promptInput = {
-        targetLanguage: input.targetLanguage,
-        documentContent: input.documentContent,
-      };
-    }
-    const {output} = await prompt(promptInput);
+    const {output} = await prompt(input);
     return output!;
   }
 );

@@ -2,7 +2,7 @@
 
 import 'regenerator-runtime/runtime';
 import { useState, useRef, useEffect } from 'react';
-import { askDocumentAction, improveAction, summarizeAction, parsePdfAction, translateAction, summarizeDocumentAction } from './actions';
+import { askDocumentAction, improveAction, summarizeAction, translateAction, summarizeDocumentAction } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -130,7 +130,6 @@ export default function Home() {
     setDocumentQueries(documentQueries.filter((_, i) => i !== index));
   };
 
-
   const readFileAsDataURL = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -153,23 +152,19 @@ export default function Home() {
     }
   
     try {
-      if (file.type.startsWith('image/')) {
+      if (file.type.startsWith('text/')) {
+        // For text files, we can read as text.
+        // Although we could convert them to data URIs, it's less efficient.
+        // The AI model can handle raw text just fine for summarization.
+        // Let's create a data URI for consistency with other file types.
+        const textContent = await file.text();
+        const base64 = btoa(unescape(encodeURIComponent(textContent)));
+        return { file: { name: file.name, content: `data:text/plain;base64,${base64}` } };
+
+      } else {
+        // For PDF and images, convert to data URI
         const dataUri = await readFileAsDataURL(file);
         return { file: { name: file.name, content: dataUri } };
-      } else if (fileExtension === '.pdf') {
-        const formData = new FormData();
-        formData.append('file', file);
-        const result = await parsePdfAction(formData);
-        if (result.error || !result.data) {
-          // Return the error instead of throwing it
-          return { error: result.error || 'Failed to parse PDF.' };
-        }
-        return {
-          file: { name: file.name, content: result.data.documentContent },
-        };
-      } else {
-        const textContent = await file.text();
-        return { file: { name: file.name, content: textContent } };
       }
     } catch (error) {
       console.error('Error processing file:', error);

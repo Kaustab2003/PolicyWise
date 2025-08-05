@@ -15,7 +15,6 @@ import {
 } from '@/ai/flows/ask-document';
 import { summarizeDocument, type SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
 import { translateText, type TranslateTextOutput } from '@/ai/flows/translate-text';
-import { parsePdf } from '@/lib/pdf-parser';
 
 async function translate(text: string, targetLanguage: string): Promise<string> {
   if (targetLanguage === 'en' || !text) {
@@ -71,40 +70,6 @@ export async function translateAction(
     };
   }
 }
-
-export async function parsePdfAction(formData: FormData): Promise<{
-  data: { documentContent: string } | null;
-  error: string | null;
-}> {
-  const file = formData.get('file') as File;
-  if (!file) {
-    return { data: null, error: 'No file uploaded.' };
-  }
-
-  try {
-    const arrayBuffer = await file.arrayBuffer();
-    // Add another layer of aggressive try-catch specifically for pdf-parse
-    try {
-      const documentContent = await parsePdf(Buffer.from(arrayBuffer));
-      return { data: { documentContent }, error: null };
-    } catch (parseError) {
-       console.error('PDF parsing itself failed:', parseError);
-       return {
-         data: null,
-         error: 'Failed to parse PDF. The file may be corrupt, encrypted, or in an unsupported format. Please try saving the file as a new PDF and upload it again.',
-       };
-    }
-  } catch (e) {
-    console.error('parsePdfAction failed:', e);
-    const errorMessage =
-      e instanceof Error ? e.message : 'An unknown error occurred.';
-    return {
-      data: null,
-      error: `Failed to process PDF: ${errorMessage}`,
-    };
-  }
-}
-
 
 export async function askDocumentAction(
   documents: DocumentContext[],
