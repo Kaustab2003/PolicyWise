@@ -1080,7 +1080,7 @@ export default function Home() {
       emptyStateIcon = <AlertTriangle className="h-12 w-12 text-primary" />;
     }
 
-    return <EmptyState icon={emptyStateIcon} />;
+    return <EmptyState />;
   };
 
   const handleTabChange = (value: string) => {
@@ -1676,7 +1676,7 @@ export default function Home() {
                 {renderCurrentTab()}
               </div>
               <aside className="h-full">
-                <Card className="sticky top-28 h-[calc(100vh-8rem)] ai-background-advanced">
+                <Card className="sticky top-28 h-[calc(100vh-8rem)]">
                   <CardHeader>
                     <CardTitle>Results</CardTitle>
                     <CardDescription>
@@ -1696,12 +1696,8 @@ export default function Home() {
   );
 }
 
-const EmptyState = ({ icon }: { icon: React.ReactNode }) => (
+const EmptyState = () => (
   <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 fade-in-up">
-    <div className="orb-container">
-      <div className="orb-outer" />
-      <div className="orb-inner" />
-    </div>
     <h3 className="text-lg font-semibold text-foreground mt-8">Ready for Analysis</h3>
     <p className="mt-1">
       Your results will be displayed here once you submit an item for analysis.
