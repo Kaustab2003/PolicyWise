@@ -9,16 +9,15 @@ import {
 } from '@/ai/flows/suggest-policy-improvements';
 import {
   askDocument,
-  type AskDocumentInput,
-  type AskDocumentOutput,
 } from '@/ai/flows/ask-document';
 import { summarizeDocument, type SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
 import { translateText, type TranslateTextOutput } from '@/ai/flows/translate-text';
 import { complianceCheck, type ComplianceCheckOutput } from '@/ai/flows/compliance-checker';
 import { riskDetection, type RiskDetectionOutput } from '@/ai/flows/risk-detection';
 import { generateSpeech, type GenerateSpeechOutput } from '@/ai/flows/generate-speech';
-import type { GenerateSummaryFromQueryInput, SuggestPolicyImprovementsInput, SummarizeDocumentInput, TranslateTextInput, ComplianceCheckInput, RiskDetectionInput, GenerateSpeechInput } from './page';
+import type { GenerateSummaryFromQueryInput, SuggestPolicyImprovementsInput, SummarizeDocumentInput, TranslateTextInput, ComplianceCheckInput, RiskDetectionInput, GenerateSpeechInput, AskDocumentInput } from './page';
 import { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
+import { AskDocumentOutput } from '@/ai/flows/ask-document';
 
 
 async function translate(text: string, targetLanguage: string): Promise<string> {
@@ -70,7 +69,7 @@ export async function complianceCheckAction(
       }))
     );
 
-    return { data: { overallCompliance: translatedOverallCompliance, complianceReport: translatedComplianceReport }, error: null };
+    return { data: { ...result, overallCompliance: translatedOverallCompliance, complianceReport: translatedComplianceReport }, error: null };
   } catch (e) {
     console.error('complianceCheckAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';

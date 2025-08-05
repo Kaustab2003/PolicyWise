@@ -17,12 +17,13 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX, FileUp, Replace, Check, ChevronsUpDown, User, UserCircle, Volume2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { GenerateSummaryFromQueryOutput, ImprovementSuggestion, SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
+import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
+import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
 import type { AskDocumentOutput } from '@/ai/flows/ask-document';
 import type { TranslateTextOutput } from '@/ai/flows/translate-text';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
-import type { ComplianceCheckOutput, ComplianceItem } from '@/ai/flows/compliance-checker';
-import type { RiskDetectionOutput, RiskItem } from '@/ai/flows/risk-detection';
+import type { ComplianceCheckOutput } from '@/ai/flows/compliance-checker';
+import type { RiskDetectionOutput } from '@/ai/flows/risk-detection';
 import type { GenerateSpeechOutput } from '@/ai/flows/generate-speech';
 import { LanguageSelector } from '@/components/language-selector';
 import { VoiceInput } from '@/components/voice-input';
@@ -753,7 +754,14 @@ export default function Home() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+               <div className="space-y-2">
+                <div className="flex justify-between items-center text-sm font-semibold text-muted-foreground">
+                  <span>Compliance Score</span>
+                  <span>{Math.round(complianceResult.complianceScore)}%</span>
+                </div>
+                <Progress value={complianceResult.complianceScore} />
+              </div>
+              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap mt-4">
                 {complianceResult.overallCompliance}
               </div>
             </CardContent>
