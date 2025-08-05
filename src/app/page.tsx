@@ -907,31 +907,29 @@ export default function Home() {
     }
 
     if (activeTab === 'ask' && askHistory.length > 0) {
-       return (
+      return (
         <div className="space-y-4 fade-in-up">
           {askHistory.map((turn) => (
             <div key={turn.id} className="flex gap-3">
               <div className="p-1.5 bg-muted rounded-full h-fit">
                 {turn.role === 'user' ? <User className="h-5 w-5 text-muted-foreground" /> : <Bot className="h-5 w-5 text-primary" />}
               </div>
-              <div className="flex-1 space-y-2">
+              <div className="flex-1 space-y-4">
                 <h4 className="font-semibold capitalize">{turn.role}</h4>
                 {turn.role === 'user' && turn.questions && (
                   <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-                    <ul className='list-disc pl-5'>
+                    <ul className='list-disc pl-5 space-y-1'>
                       {turn.questions.map((q, i) => <li key={i}>{q}</li>)}
                     </ul>
                   </div>
                 )}
                 {turn.role === 'model' && turn.answers && (
-                  <Accordion type="single" collapsible className="w-full">
+                  <div className="space-y-4">
                     {turn.answers.map((item, index) => (
-                      <AccordionItem value={`item-${index}`} key={index}>
-                        <AccordionTrigger className="text-left font-semibold hover:no-underline">
-                          <span className='truncate pr-4'>{item.question}</span>
-                        </AccordionTrigger>
-                        <AccordionContent className="prose prose-sm dark:prose-invert max-w-none pt-2">
-                           <div className="flex justify-end mb-2">
+                      <div key={index} className="space-y-2">
+                        <h5 className="font-semibold">{item.question}</h5>
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <div className="flex justify-end mb-2">
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
@@ -962,10 +960,10 @@ export default function Home() {
                               </Badge>
                             </div>
                           )}
-                        </AccordionContent>
-                      </AccordionItem>
+                        </div>
+                      </div>
                     ))}
-                  </Accordion>
+                  </div>
                 )}
                  {isLoading && turn.id === askHistory[askHistory.length - 1].id && turn.role === 'user' && (
                   <div className="flex items-center gap-2 text-muted-foreground text-sm pt-2">
