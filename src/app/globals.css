@@ -84,12 +84,19 @@ body {
   }
   
   .dark body {
-    /* This will be covered by the particle background, but is a good fallback */
-    background-image: linear-gradient(to bottom right, hsl(270, 50%, 15%), hsl(330, 60%, 15%), #000);
+    background-color: #000;
+  }
+
+  h1, h2, h3, h4 {
+    text-shadow: 0 1px 3px hsla(0, 0%, 0%, 0.2);
+  }
+
+  .text-glow-primary {
+    text-shadow: 0 0 8px hsl(var(--primary) / 0.5);
   }
 
   b, strong {
-    @apply text-primary;
+    @apply text-primary text-glow-primary;
   }
 }
 
@@ -109,79 +116,42 @@ body {
     }
   }
 
-  .particle-background {
+  .ai-background {
     position: fixed;
     inset: 0;
     z-index: -10;
+    background: radial-gradient(circle at center, 
+      hsl(280, 100%, 15%) 0%,
+      hsl(260, 80%, 8%) 40%,
+      hsl(240, 90%, 5%) 100%
+    );
     overflow: hidden;
-    background: linear-gradient(135deg, hsl(270, 50%, 8%), hsl(330, 60%, 8%), #000);
   }
   
-  .particle {
+  .glowing-orb {
     position: absolute;
-    width: 2px;
-    height: 2px;
-    background: hsl(var(--primary));
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle,
+      hsl(280, 100%, 70%) 0%,
+      hsl(260, 80%, 50%) 30%,
+      hsl(240, 60%, 30%) 70%,
+      transparent 100%
+    );
     border-radius: 50%;
-    box-shadow: 0 0 10px hsl(var(--primary));
-    opacity: 0;
-    animation: particle-float 6s ease-in-out infinite;
+    filter: blur(1px);
+    box-shadow: 
+      0 0 50px hsl(280, 100%, 60%),
+      0 0 100px hsl(260, 80%, 50%),
+      inset 0 0 50px hsl(280, 100%, 40%);
+    animation: pulse 3s ease-in-out infinite;
   }
 
-  .orb {
-     position: absolute;
-     top: 50%;
-     left: 50%;
-     transform: translate(-50%, -50%);
-     width: 300px;
-     height: 300px;
-  }
-
-  .orb-core {
-    position: absolute;
-    inset: 0;
-    border-radius: 9999px;
-    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
-    box-shadow: 0 0 40px -10px hsl(var(--primary)), 0 0 50px -20px hsl(var(--accent));
-    animation: orb-pulse 4s ease-in-out infinite alternate;
-  }
-  
-  .orb-glow {
-    position: absolute;
-    inset: -50px;
-    border-radius: 9999px;
-    background-image: radial-gradient(circle, hsl(var(--primary) / 0.3) 0%, transparent 70%);
-    filter: blur(10px);
-    animation: glow-pulse 4s ease-in-out infinite alternate-reverse, orb-rotate 15s linear infinite;
-  }
-  
-  @keyframes particle-float {
-    0% {
-      transform: translateY(20px) scale(0.5);
-      opacity: 0;
-    }
-    50% {
-      transform: translateY(-20px) scale(1);
-      opacity: 0.7;
-    }
-    100% {
-      transform: translateY(20px) scale(0.5);
-      opacity: 0;
-    }
-  }
-
-  @keyframes orb-pulse {
-    from { transform: scale(0.8); }
-    to { transform: scale(1.1); }
-  }
-
-  @keyframes glow-pulse {
-     from { opacity: 0.2; transform: scale(0.9); }
-     to { opacity: 0.5; transform: scale(1.2); }
-  }
-
-  @keyframes orb-rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
   }
 }
