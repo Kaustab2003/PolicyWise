@@ -18,7 +18,6 @@ import { generateSpeech, type GenerateSpeechOutput } from '@/ai/flows/generate-s
 import type { GenerateSummaryFromQueryInput, SuggestPolicyImprovementsInput, SummarizeDocumentInput, TranslateTextInput, ComplianceCheckInput, RiskDetectionInput, GenerateSpeechInput, AskDocumentInput } from './page';
 import { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import { AskDocumentOutput } from '@/ai/flows/ask-document';
-import { parsePdf } from '@/lib/pdf-parser';
 
 
 async function translate(text: string, targetLanguage: string): Promise<string> {
@@ -38,9 +37,24 @@ export async function parsePdfAction(
     if (!dataUri.startsWith('data:application/pdf;base64,')) {
       throw new Error('Invalid PDF data URI');
     }
-    const base64Data = dataUri.split(',')[1];
-    const textContent = await parsePdf(base64Data);
-    return { data: textContent, error: null };
+    // This is a temporary workaround to get the host for the fetch call.
+    // In a real production environment, this should be handled more robustly,
+    // for example, by using an environment variable for the base URL.
+    const host = 'http://localhost:9002';
+    
+    const response = await fetch(`${host}/api/parse-pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataUri }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || `Server responded with ${response.status}`);
+    }
+
+    return { data: result.text, error: null };
   } catch (e) {
     console.error('parsePdfAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
@@ -296,3 +310,5 @@ export async function improveAction(
     };
   }
 }
+
+    
