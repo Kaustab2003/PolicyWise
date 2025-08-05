@@ -20,16 +20,43 @@ import {
 } from "@/components/ui/popover"
 
 const languages = [
+    // Existing and other world languages
     { value: "en", label: "English", flag: "🇬🇧" },
-    { value: "es", label: "Español", flag: "🇪🇸" },
+    { value: "ar", label: "العربية", flag: "🇸🇦" },
+    { value: "bn", label: "বাংলা", flag: "🇧🇩" },
+    { value: "zh", label: "中文", flag: "🇨🇳" },
     { value: "fr", label: "Français", flag: "🇫🇷" },
     { value: "de", label: "Deutsch", flag: "🇩🇪" },
+    { value: "he", label: "עברית", flag: "🇮🇱" },
     { value: "hi", label: "हिन्दी", flag: "🇮🇳" },
+    { value: "it", label: "Italiano", flag: "🇮🇹" },
     { value: "ja", label: "日本語", flag: "🇯🇵" },
+    { value: "ko", label: "한국어", flag: "🇰🇷" },
     { value: "pt", label: "Português", flag: "🇵🇹" },
     { value: "ru", label: "Русский", flag: "🇷🇺" },
-    { value: "zh", label: "中文", flag: "🇨🇳" },
+    { value: "es", label: "Español", flag: "🇪🇸" },
+    { value: "sv", label: "Svenska", flag: "🇸🇪" },
+    
+    // Indian Languages
+    { value: "as", label: "অসমীয়া", flag: "🇮🇳" },
+    // Bengali (bn) is already included
+    { value: "gu", label: "ગુજરાતી", flag: "🇮🇳" },
+    // Hindi (hi) is already included
+    { value: "kn", label: "ಕನ್ನಡ", flag: "🇮🇳" },
+    { value: "ks", label: "कश्मीरी", flag: "🇮🇳" },
+    { value: "ml", label: "മലയാളം", flag: "🇮🇳" },
+    { value: "mr", label: "मराठी", flag: "🇮🇳" },
+    { value: "ne", label: "नेपाली", flag: "🇳🇵" },
+    { value: "or", label: "ଓଡ଼ିଆ", flag: "🇮🇳" },
+    { value: "pa", label: "ਪੰਜਾਬੀ", flag: "🇮🇳" },
+    { value: "sa", label: "संस्कृतम्", flag: "🇮🇳" },
+    { value: "sd", label: "सिन्धी", flag: "🇮🇳" },
+    { value: "ta", label: "தமிழ்", flag: "🇮🇳" },
+    { value: "te", label: "తెలుగు", flag: "🇮🇳" },
+    { value: "ur", label: "اردو", flag: "🇵🇰" },
 ]
+
+// Note: Bodo, Dogri, Konkani, Maithili, Manipuri, Santali are not included as they may not have standard ISO 639-1 codes supported by the translation service.
 
 type LanguageSelectorProps = {
     value: string;
@@ -70,7 +97,7 @@ export function LanguageSelector({ value, onValueChange }: LanguageSelectorProps
           <CommandList>
             <CommandEmpty>No language found.</CommandEmpty>
             <CommandGroup>
-              {languages.map((language) => (
+              {languages.sort((a, b) => a.label.localeCompare(b.label)).map((language) => (
                 <CommandItem
                   key={language.value}
                   value={language.value}
