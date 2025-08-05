@@ -49,7 +49,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { z } from 'zod';
-import pdf from 'pdf-parse';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Set worker source for pdfjs-dist
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+}
 
 
 export const maxDuration = 120;
@@ -276,17 +281,19 @@ export default function Home() {
     try {
       if (file.type === 'application/pdf') {
         const arrayBuffer = await readFileAsArrayBuffer(file);
-        const data = await pdf(arrayBuffer);
-        const dataUri = await readFileAsDataURL(file);
-        let paginatedText = '';
-        const pages = data.text.split('\f');
-        for (let i = 0; i < pages.length; i++) {
-          paginatedText += `--- Page ${i + 1} ---\n${pages[i].trim()}\n\n`;
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => (item as any).str).join(' ');
+          fullText += `--- Page ${i} ---\n${pageText}\n\n`;
         }
-        return { file: { name: file.name, content: paginatedText, originalContent: dataUri } };
+        const dataUri = await readFileAsDataURL(file);
+        return { file: { name: file.name, content: fullText, originalContent: dataUri } };
       }
       
-      if (file.type === 'text/plain') {
+      if (file.type.startsWith('text/')) {
         const textContent = await file.text();
         return { file: { name: file.name, content: textContent } };
       }
@@ -1252,7 +1259,7 @@ export default function Home() {
           <div className="space-y-2">
             <div className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
               <div className="flex items-center gap-2 truncate">
-                {file.content.startsWith('data:image') ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
+                {file.originalContent?.startsWith('data:image') || file.content.startsWith('data:image') ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
                 <span className="truncate">{file.name}</span>
               </div>
               <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={onRemove}>
@@ -1289,7 +1296,7 @@ export default function Home() {
                 ref={riskFileInputRef}
                 onChange={handleRiskFileChange}
                 className="hidden"
-                accept="*"
+                accept=".pdf,.txt,.md"
               />
             {riskFile ? (
                <FileUploadDisplay file={riskFile} onRemove={removeRiskFile} onTriggerClick={() => riskFileInputRef.current?.click()} isLoading={isLoading} />
@@ -1337,7 +1344,7 @@ export default function Home() {
               ref={complianceFileInputRef}
               onChange={handleComplianceFileChange}
               className="hidden"
-              accept="*"
+              accept=".pdf,.txt,.md"
             />
             {complianceFile ? (
                <FileUploadDisplay file={complianceFile} onRemove={removeComplianceFile} onTriggerClick={() => complianceFileInputRef.current?.click()} isLoading={isLoading} />
@@ -1464,7 +1471,7 @@ export default function Home() {
                 ref={improveFileInputRef}
                 onChange={handleImproveFileChange}
                 className="hidden"
-                accept="*"
+                accept=".pdf,.txt,.md"
               />
             {improveFile ? (
                <FileUploadDisplay file={improveFile} onRemove={removeImproveFile} onTriggerClick={() => improveFileInputRef.current?.click()} isLoading={isLoading} />
@@ -1515,7 +1522,7 @@ export default function Home() {
                 onChange={handleFileChange}
                 className="hidden"
                 multiple
-                accept="*"
+                accept=".pdf,.txt,.md,image/*"
               />
               <Button
                 variant="outline"
@@ -1534,7 +1541,7 @@ export default function Home() {
                   {documentFiles.map((file) => (
                     <div key={file.name} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
                       <div className="flex items-center gap-2 truncate">
-                        {file.originalContent?.startsWith('data:image') || file.content.startsWith('data:image') ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
+                        {file.content.startsWith('data:image') ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
                         <span className="truncate">{file.name}</span>
                       </div>
                       <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeFile(file.name)}>
@@ -1622,7 +1629,7 @@ export default function Home() {
                 ref={summarizeFileInputRef}
                 onChange={handleSummarizeFileChange}
                 className="hidden"
-                accept="*"
+                accept=".pdf,.txt,.md"
               />
               {!summarizeFile && (
                 <Button
@@ -1847,6 +1854,5 @@ const ResultsSkeleton = () => (
     </Card>
   </div>
 );
-
 
 
