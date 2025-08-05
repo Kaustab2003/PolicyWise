@@ -11,7 +11,17 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-// Input schema is defined in page.tsx
+const ComplianceCheckInputSchema = z.object({
+  policyDocument: z
+    .string()
+    .describe(
+      "The policy document to be checked, as a string or a data URI (e.g., 'data:image/jpeg;base64,...')."
+    ),
+  complianceStandard: z
+    .string()
+    .describe('The compliance standard to check against (e.g., "GDPR", "HIPAA").'),
+});
+export type ComplianceCheckInput = z.infer<typeof ComplianceCheckInputSchema>;
 
 const ComplianceItemSchema = z.object({
     isCompliant: z.boolean().describe('Whether the clause is compliant or not.'),
@@ -26,13 +36,13 @@ const ComplianceCheckOutputSchema = z.object({
 });
 export type ComplianceCheckOutput = z.infer<typeof ComplianceCheckOutputSchema>;
 
-export async function complianceCheck(input: any): Promise<ComplianceCheckOutput> {
+export async function complianceCheck(input: ComplianceCheckInput): Promise<ComplianceCheckOutput> {
   return complianceCheckFlow(input);
 }
 
 const prompt = ai.definePrompt({
   name: 'complianceCheckPrompt',
-  input: {schema: z.any()},
+  input: {schema: ComplianceCheckInputSchema},
   output: {schema: ComplianceCheckOutputSchema},
   prompt: `You are an expert compliance officer. Your task is to review the provided policy document and check its compliance against the specified standard.
 
@@ -53,7 +63,7 @@ Policy Document:
 const complianceCheckFlow = ai.defineFlow(
   {
     name: 'complianceCheckFlow',
-    inputSchema: z.any(),
+    inputSchema: ComplianceCheckInputSchema,
     outputSchema: ComplianceCheckOutputSchema,
   },
   async input => {

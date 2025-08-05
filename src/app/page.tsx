@@ -94,7 +94,7 @@ const SummarizeDocumentInputSchema = z.object({
 export type SummarizeDocumentInput = z.infer<typeof SummarizeDocumentInputSchema>;
 
 const ComplianceCheckInputSchema = z.object({
-  policyDocument: z.string().describe("The policy document to be checked."),
+  policyDocument: z.string().describe("The policy document to be checked, as a string or a data URI."),
   complianceStandard: z.string().describe('The compliance standard to check against.'),
 });
 export type ComplianceCheckInput = z.infer<typeof ComplianceCheckInputSchema>;
