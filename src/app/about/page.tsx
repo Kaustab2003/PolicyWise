@@ -16,6 +16,8 @@ import {
   Languages,
   PanelLeft,
   FileText,
+  ShieldCheck,
+  AlertTriangle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -193,6 +195,61 @@ export default function AboutPage() {
                   </ol>
                   <p className="mt-2 text-sm text-foreground/80">
                     The AI will return the translated text in the results panel.
+                  </p>
+                </div>
+              </div>
+
+               <div className="flex items-start gap-6">
+                <div className="p-3 bg-accent/10 rounded-lg">
+                  <ShieldCheck className="h-8 w-8 text-accent" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">
+                    Compliance Checker
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Check if your policy adheres to specific compliance standards.
+                  </p>
+                  <ol className="list-decimal list-inside mt-2 space-y-1">
+                     <li>
+                      Select "Compliance Checker" from the sidebar.
+                    </li>
+                    <li>
+                      Paste your draft policy into the "Policy Document" area.
+                    </li>
+                    <li>
+                      Enter the compliance standard (e.g., "GDPR", "HIPAA").
+                    </li>
+                    <li>Click "Check Compliance".</li>
+                  </ol>
+                  <p className="mt-2 text-sm text-foreground/80">
+                    The AI will provide a detailed report on the policy's adherence to the specified standard.
+                  </p>
+                </div>
+              </div>
+
+               <div className="flex items-start gap-6">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <AlertTriangle className="h-8 w-8 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">
+                    Risk Detection
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Identify potential legal, financial, or operational risks in your policy.
+                  </p>
+                  <ol className="list-decimal list-inside mt-2 space-y-1">
+                     <li>
+                      Select "Risk Detection" from the sidebar.
+                    </li>
+                    <li>
+                      Paste your draft policy into the "Policy Document" area.
+                    </li>
+                    <li>Click "Detect Risks".</li>
+                  </ol>
+                  <p className="mt-2 text-sm text-foreground/80">
+                    The AI will generate a report detailing potential risks and suggestions for mitigation.
                   </p>
                 </div>
               </div>

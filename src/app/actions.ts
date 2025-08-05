@@ -15,6 +15,9 @@ import {
 } from '@/ai/flows/ask-document';
 import { summarizeDocument, type SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
 import { translateText, type TranslateTextOutput } from '@/ai/flows/translate-text';
+import { complianceCheck, type ComplianceCheckOutput } from '@/ai/flows/compliance-checker';
+import { riskDetection, type RiskDetectionOutput } from '@/ai/flows/risk-detection';
+
 
 async function translate(text: string, targetLanguage: string): Promise<string> {
   if (targetLanguage === 'en' || !text) {
@@ -24,6 +27,75 @@ async function translate(text: string, targetLanguage: string): Promise<string> 
   // No try/catch here, as it will be handled by the calling action
   const result = await translateText({ text, targetLanguage });
   return result.translatedText;
+}
+
+export async function complianceCheckAction(
+  policyDocument: string,
+  complianceStandard: string,
+  language: string,
+): Promise<{ data: ComplianceCheckOutput | null; error: string | null }> {
+  if (!policyDocument || !complianceStandard) {
+    return { data: null, error: 'Policy document and compliance standard are required.' };
+  }
+
+  try {
+    const result = await complianceCheck({
+      policyDocument,
+      complianceStandard,
+    });
+    
+    const translatedOverallCompliance = await translate(result.overallCompliance, language);
+    const translatedComplianceReport = await Promise.all(
+      result.complianceReport.map(async (item) => ({
+        ...item,
+        clause: await translate(item.clause, language),
+        reason: await translate(item.reason, language),
+      }))
+    );
+
+    return { data: { overallCompliance: translatedOverallCompliance, complianceReport: translatedComplianceReport }, error: null };
+  } catch (e) {
+    console.error('complianceCheckAction failed:', e);
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+    return {
+      data: null,
+      error: `Failed to check compliance: ${errorMessage}`,
+    };
+  }
+}
+
+export async function riskDetectionAction(
+  policyDocument: string,
+  language: string,
+): Promise<{ data: RiskDetectionOutput | null; error: string | null }> {
+  if (!policyDocument) {
+    return { data: null, error: 'Policy document is required.' };
+  }
+
+  try {
+    const result = await riskDetection({
+      policyDocument,
+    });
+    
+    const translatedOverallRiskAssessment = await translate(result.overallRiskAssessment, language);
+    const translatedRiskReport = await Promise.all(
+      result.riskReport.map(async (item) => ({
+        ...item,
+        riskArea: await translate(item.riskArea, language),
+        description: await translate(item.description, language),
+        suggestion: await translate(item.suggestion, language),
+      }))
+    );
+
+    return { data: { overallRiskAssessment: translatedOverallRiskAssessment, riskReport: translatedRiskReport }, error: null };
+  } catch (e) {
+    console.error('riskDetectionAction failed:', e);
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+    return {
+      data: null,
+      error: `Failed to detect risks: ${errorMessage}`,
+    };
+  }
 }
 
 export async function summarizeDocumentAction(

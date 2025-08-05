@@ -2,7 +2,7 @@
 
 import 'regenerator-runtime/runtime';
 import { useState, useRef, useEffect } from 'react';
-import { askDocumentAction, improveAction, summarizeAction, translateAction, summarizeDocumentAction } from './actions';
+import { askDocumentAction, improveAction, summarizeAction, translateAction, summarizeDocumentAction, complianceCheckAction, riskDetectionAction } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,13 +15,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
 import type { AskDocumentOutput, DocumentContext } from '@/ai/flows/ask-document';
 import type { TranslateTextOutput } from '@/ai/flows/translate-text';
 import type { SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
+import type { ComplianceCheckOutput } from '@/ai/flows/compliance-checker';
+import type { RiskDetectionOutput } from '@/ai/flows/risk-detection';
 import { LanguageSelector } from '@/components/language-selector';
 import { VoiceInput } from '@/components/voice-input';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
@@ -68,7 +70,7 @@ export default function Home() {
   const [currentQuery, setCurrentQuery] = useState('');
   const [queries, setQueries] = useState<string[]>(['Is accidental drop damage covered?']);
   
-  const [activeTab, setActiveTab] = useState<'query' | 'improve' | 'ask' | 'translate' | 'summarize'>('query');
+  const [activeTab, setActiveTab] = useState<'query' | 'improve' | 'ask' | 'translate' | 'summarize' | 'compliance' | 'risk'>('query');
   const [language, setLanguage] = useState('en');
 
   // State for document Q&A
@@ -86,6 +88,13 @@ export default function Home() {
   const [summarizeFile, setSummarizeFile] = useState<DocumentContext | null>(null);
   const [summarizeResult, setSummarizeResult] = useState<SummarizeDocumentOutput | null>(null);
   const summarizeFileInputRef = useRef<HTMLInputElement>(null);
+
+  // State for compliance checker
+  const [complianceStandard, setComplianceStandard] = useState('GDPR');
+  const [complianceResult, setComplianceResult] = useState<ComplianceCheckOutput | null>(null);
+  
+  // State for risk detection
+  const [riskResult, setRiskResult] = useState<RiskDetectionOutput | null>(null);
 
   const [summaryResult, setSummaryResult] =
     useState<GenerateSummaryFromQueryOutput | null>(null);
@@ -258,6 +267,8 @@ export default function Home() {
     setImprovementResult(null);
     setTranslationResult(null);
     setSummarizeResult(null);
+    setComplianceResult(null);
+    setRiskResult(null);
     const result = await askDocumentAction(documentFiles, documentQueries, language);
     if (result.error) {
       toast({
@@ -282,6 +293,8 @@ export default function Home() {
     setAskResult(null);
     setTranslationResult(null);
     setSummarizeResult(null);
+    setComplianceResult(null);
+    setRiskResult(null);
     const result = await summarizeAction(policy, queries, language);
     if (result.error) {
       toast({
@@ -302,6 +315,8 @@ export default function Home() {
     setAskResult(null);
     setTranslationResult(null);
     setSummarizeResult(null);
+    setComplianceResult(null);
+    setRiskResult(null);
     const result = await improveAction(policy, language);
     if (result.error) {
       toast({
@@ -322,6 +337,8 @@ export default function Home() {
     setImprovementResult(null);
     setAskResult(null);
     setSummarizeResult(null);
+    setComplianceResult(null);
+    setRiskResult(null);
     const result = await translateAction(textToTranslate, language);
     if (result.error) {
       toast({
@@ -343,6 +360,8 @@ export default function Home() {
     setSummaryResult(null);
     setImprovementResult(null);
     setTranslationResult(null);
+    setComplianceResult(null);
+    setRiskResult(null);
     const result = await summarizeDocumentAction(summarizeFile.content, language);
     if (result.error) {
       toast({
@@ -353,6 +372,50 @@ export default function Home() {
       setSummarizeResult(null);
     } else {
       setSummarizeResult(result.data);
+    }
+    setIsLoading(false);
+  };
+
+  const handleComplianceCheck = async () => {
+    setIsLoading(true);
+    setSummaryResult(null);
+    setImprovementResult(null);
+    setAskResult(null);
+    setTranslationResult(null);
+    setSummarizeResult(null);
+    setRiskResult(null);
+    const result = await complianceCheckAction(policy, complianceStandard, language);
+    if (result.error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: result.error,
+      });
+      setComplianceResult(null);
+    } else {
+      setComplianceResult(result.data);
+    }
+    setIsLoading(false);
+  };
+
+  const handleRiskDetection = async () => {
+    setIsLoading(true);
+    setSummaryResult(null);
+    setImprovementResult(null);
+    setAskResult(null);
+    setTranslationResult(null);
+    setSummarizeResult(null);
+    setComplianceResult(null);
+    const result = await riskDetectionAction(policy, language);
+    if (result.error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: result.error,
+      });
+      setRiskResult(null);
+    } else {
+      setRiskResult(result.data);
     }
     setIsLoading(false);
   };
@@ -464,8 +527,111 @@ export default function Home() {
 
 
   const renderResults = () => {
-    if (isLoading && !askResult && !summaryResult && !improvementResult && !translationResult && !summarizeResult) {
+    if (isLoading && !askResult && !summaryResult && !improvementResult && !translationResult && !summarizeResult && !complianceResult && !riskResult) {
       return <ResultsSkeleton />;
+    }
+
+    if (activeTab === 'risk' && riskResult) {
+      const getRiskColor = (level: string) => {
+        switch (level) {
+          case 'Critical': return 'border-red-500 bg-red-500/10';
+          case 'High': return 'border-orange-500 bg-orange-500/10';
+          case 'Medium': return 'border-yellow-500 bg-yellow-500/10';
+          case 'Low': return 'border-green-500 bg-green-500/10';
+          default: return 'border-gray-500 bg-gray-500/10';
+        }
+      };
+      return (
+        <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="text-primary" />
+                Overall Risk Assessment
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+                {riskResult.overallRiskAssessment}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="text-primary" />
+                Risk Report
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible className="w-full">
+                {riskResult.riskReport.map((item, index) => (
+                  <AccordionItem value={`item-${index}`} key={index} className={cn("border-l-4 pl-4", getRiskColor(item.riskLevel))}>
+                    <AccordionTrigger className="text-left font-semibold hover:no-underline">
+                      <div className="flex items-center gap-2">
+                        <span>{item.riskArea}</span>
+                        <Badge variant="destructive">{item.riskLevel}</Badge>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="prose prose-sm dark:prose-invert max-w-none pt-2">
+                      <p><strong>Description:</strong> {item.description}</p>
+                      <p><strong>Suggestion:</strong> {item.suggestion}</p>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    
+    if (activeTab === 'compliance' && complianceResult) {
+      return (
+        <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="text-primary" />
+                Overall Compliance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+                {complianceResult.overallCompliance}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="text-primary" />
+                Compliance Report
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {complianceResult.complianceReport.map((item, index) => (
+                  <div key={index} className="p-4 rounded-md border bg-muted/50">
+                    <div className="flex items-center gap-2 mb-2">
+                      {item.isCompliant ? (
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <ShieldX className="h-5 w-5 text-red-500" />
+                      )}
+                      <h4 className="font-semibold">{item.isCompliant ? 'Compliant' : 'Not Compliant'}</h4>
+                    </div>
+                    <pre className="bg-background p-2 rounded-md overflow-x-auto text-xs font-code mb-2">
+                      <code>{item.clause}</code>
+                    </pre>
+                    <p className="text-sm text-muted-foreground">{item.reason}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
     }
 
     if (activeTab === 'summarize' && summarizeResult) {
@@ -708,16 +874,94 @@ export default function Home() {
       emptyStateIcon = <Sparkles className="h-12 w-12 text-primary" />;
     } else if (activeTab === 'summarize') {
       emptyStateIcon = <FileText className="h-12 w-12 text-primary" />;
+    } else if (activeTab === 'compliance') {
+      emptyStateIcon = <ShieldCheck className="h-12 w-12 text-primary" />;
+    } else if (activeTab === 'risk') {
+      emptyStateIcon = <AlertTriangle className="h-12 w-12 text-primary" />;
     }
+
     return <EmptyState icon={emptyStateIcon} />;
   };
 
   const handleTabChange = (value: string) => {
-    setActiveTab(value as 'query' | 'improve' | 'ask' | 'translate' | 'summarize');
+    setActiveTab(value as 'query' | 'improve' | 'ask' | 'translate' | 'summarize' | 'compliance' | 'risk');
   };
 
   const renderCurrentTab = () => {
     const commonButtonClasses = "w-full transition-all transform hover:scale-105 hover:brightness-110 hover:saturate-125 active:scale-100";
+
+    if (activeTab === 'risk') {
+      return (
+        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          <CardHeader>
+            <CardTitle>Risk Detection</CardTitle>
+            <CardDescription>
+              Analyze a policy to identify potential legal, financial, and operational risks.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="policy-doc-risk" className="font-semibold">Policy Document</label>
+              <Textarea
+                id="policy-doc-risk"
+                placeholder="Paste your policy document here..."
+                className="min-h-[350px] font-code text-xs"
+                value={policy}
+                onChange={(e) => setPolicy(e.target.value)}
+              />
+            </div>
+            <Button
+              onClick={handleRiskDetection}
+              disabled={isLoading || !policy}
+              className={cn(commonButtonClasses, "bg-primary hover:bg-primary/90 text-primary-foreground")}
+            >
+              {isLoading && activeTab === 'risk' ? 'Detecting...' : <><AlertTriangle className="mr-2"/>Detect Risks</>}
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    if (activeTab === 'compliance') {
+      return (
+        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          <CardHeader>
+            <CardTitle>Compliance Checker</CardTitle>
+            <CardDescription>
+              Check a policy's adherence to a specific compliance standard (e.g., GDPR, HIPAA).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="policy-doc-compliance" className="font-semibold">Policy Document</label>
+              <Textarea
+                id="policy-doc-compliance"
+                placeholder="Paste your policy document here..."
+                className="min-h-[300px] font-code text-xs"
+                value={policy}
+                onChange={(e) => setPolicy(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="compliance-standard" className="font-semibold">Compliance Standard</label>
+              <Input
+                id="compliance-standard"
+                placeholder="e.g., GDPR, HIPAA"
+                value={complianceStandard}
+                onChange={(e) => setComplianceStandard(e.target.value)}
+              />
+            </div>
+            <Button
+              onClick={handleComplianceCheck}
+              disabled={isLoading || !policy || !complianceStandard}
+              className={cn(commonButtonClasses, "bg-accent hover:bg-accent/90 text-accent-foreground")}
+            >
+              {isLoading && activeTab === 'compliance' ? 'Checking...' : <><ShieldCheck className="mr-2" />Check Compliance</>}
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
 
     if (activeTab === 'query') {
       return (
@@ -1031,6 +1275,19 @@ export default function Home() {
     return null;
   }
 
+  const getHeaderTitle = () => {
+    switch (activeTab) {
+      case 'query': return 'Query Policy';
+      case 'improve': return 'Improve Policy';
+      case 'ask': return 'Ask Document';
+      case 'summarize': return 'Summarize Document';
+      case 'translate': return 'Translate';
+      case 'compliance': return 'Compliance Checker';
+      case 'risk': return 'Risk Detection';
+      default: return 'PolicyWise';
+    }
+  };
+
   return (
     <TooltipProvider>
       <Sidebar collapsible="icon" variant="sidebar">
@@ -1069,6 +1326,18 @@ export default function Home() {
                 <span>Translate</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton isActive={activeTab === 'compliance'} onClick={() => handleTabChange('compliance')} tooltip="Compliance Checker">
+                <ShieldCheck />
+                <span>Compliance Checker</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton isActive={activeTab === 'risk'} onClick={() => handleTabChange('risk')} tooltip="Risk Detection">
+                <AlertTriangle />
+                <span>Risk Detection</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
@@ -1077,7 +1346,7 @@ export default function Home() {
           <header className="p-4 border-b flex justify-between items-center sticky top-0 bg-background/80 backdrop-blur-sm z-10">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="md:hidden" />
-              <h2 className="text-xl font-semibold capitalize">{activeTab === 'query' || activeTab === 'improve' ? `${activeTab} Policy` : activeTab === 'ask' ? 'Ask Document' : activeTab === 'summarize' ? 'Summarize Document' : 'Translate'}</h2>
+              <h2 className="text-xl font-semibold capitalize">{getHeaderTitle()}</h2>
             </div>
             <div className="flex items-center gap-4">
               <LanguageSelector value={language} onValueChange={setLanguage} />
