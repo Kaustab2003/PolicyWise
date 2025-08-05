@@ -139,13 +139,13 @@ export default function Home() {
   };
 
   const processFile = async (file: File): Promise<DocumentContext | null> => {
-    const allowedMimeTypes = ['text/', 'application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    const allowedMimeTypes = ['text/', 'application/pdf', 'image/'];
     const allowedFileExtensions = ['.txt', '.md', '.pdf', '.jpg', '.jpeg', '.png'];
     const fileExtension = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
 
     const isAllowed =
-      allowedMimeTypes.some(type => file.type.startsWith(type)) ||
-      allowedFileExtensions.includes(fileExtension);
+      allowedFileExtensions.includes(fileExtension) ||
+      allowedMimeTypes.some(type => file.type.startsWith(type));
     
     if (!isAllowed) {
       toast({
@@ -160,7 +160,7 @@ export default function Home() {
       if (file.type.startsWith('image/')) {
          const dataUri = await readFileAsDataURL(file);
          return { name: file.name, content: dataUri };
-      } else if (file.type === 'application/pdf' || fileExtension === '.pdf') {
+      } else if (fileExtension === '.pdf') {
         const formData = new FormData();
         formData.append('file', file);
         const result = await parsePdfAction(formData);
