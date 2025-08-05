@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+   webpack: (config, { isServer }) => {
+    // This is to ensure our worker file is bundled correctly by Next.js/Webpack.
+    if (isServer) {
+        config.entry = {
+            ...config.entry,
+            'app/lib/pdf-parser-worker': './src/lib/pdf-parser-worker.ts'
+        };
+    }
+    return config;
+  },
   experimental: {
     serverComponentsExternalPackages: ['pdf-parse'],
   },
