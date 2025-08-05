@@ -333,6 +333,7 @@ export default function Home() {
     setSummaryResult(null);
     setImprovementResult(null);
     setTranslationResult(null);
+    setSummarizeResult(null);
     const result = await summarizeDocumentAction(summarizeFile.content, language);
     if (result.error) {
       toast({
@@ -651,7 +652,7 @@ export default function Home() {
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
-                accept="text/*,application/pdf,.md,image/jpeg,image/png,image/jpg"
+                accept=".txt,.md,.pdf,.jpg,.jpeg,.png"
                 multiple
                 disabled={documentFiles.length >= 5}
               />
@@ -761,7 +762,7 @@ export default function Home() {
                 ref={summarizeFileInputRef}
                 onChange={handleSummarizeFileChange}
                 className="hidden"
-                accept="text/*,application/pdf,.md,image/jpeg,image/png,image/jpg"
+                accept=".txt,.md,.pdf,.jpg,.jpeg,.png"
                 disabled={!!summarizeFile}
               />
               {!summarizeFile && (
@@ -962,5 +963,3 @@ const ResultsSkeleton = () => (
     </Card>
   </div>
 );
-
-    
