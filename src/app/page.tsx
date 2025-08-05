@@ -2,7 +2,7 @@
 
 import 'regenerator-runtime/runtime';
 import { useState, useRef, useEffect } from 'react';
-import { askDocumentAction, improveAction, summarizeAction, parsePdfAction } from './actions';
+import { askDocumentAction, improveAction, summarizeAction, parsePdfAction, translateAction } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -30,7 +30,6 @@ import Link from 'next/link';
 import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { translateAction } from './actions';
 
 const defaultPolicy = `## TechGadget Pro - 1-Year Limited Warranty
 
@@ -460,27 +459,20 @@ export default function Home() {
             <div className="space-y-2">
               <label htmlFor="user-query" className="font-semibold">Your Questions</label>
               <div className="flex gap-2">
-                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Input
-                      id="user-query"
-                      placeholder="Type a question and press Enter..."
-                      value={currentQuery}
-                      onChange={(e) => setCurrentQuery(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddQuery();
-                        }
-                      }}
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Press Enter to add the question to the list</p>
-                  </TooltipContent>
-                </Tooltip>
-                 <Button variant="ghost" size="icon" onClick={handleAddQuery} aria-label="Add question">
-                  <PlusCircle />
+                <Input
+                  id="user-query"
+                  placeholder="Type a question..."
+                  value={currentQuery}
+                  onChange={(e) => setCurrentQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddQuery();
+                    }
+                  }}
+                />
+                <Button variant="outline" onClick={handleAddQuery} aria-label="Add question">
+                  Add
                 </Button>
                 {isClient && browserSupportsSpeechRecognition && (
                   <VoiceInput
@@ -606,27 +598,20 @@ export default function Home() {
                 <div className="space-y-2">
                   <label htmlFor="doc-query" className="font-semibold">Your Questions</label>
                   <div className="flex gap-2">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Input
-                          id="doc-query"
-                          placeholder="Type a question and press Enter..."
-                          value={currentDocumentQuery}
-                          onChange={(e) => setCurrentDocumentQuery(e.target.value)}
-                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddDocumentQuery();
-                            }
-                          }}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Press Enter to add the question to the list</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <Button variant="ghost" size="icon" onClick={handleAddDocumentQuery} aria-label="Add question">
-                      <PlusCircle />
+                    <Input
+                      id="doc-query"
+                      placeholder="Type a question..."
+                      value={currentDocumentQuery}
+                      onChange={(e) => setCurrentDocumentQuery(e.target.value)}
+                       onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddDocumentQuery();
+                        }
+                      }}
+                    />
+                    <Button variant="outline" onClick={handleAddDocumentQuery} aria-label="Add question">
+                      Add
                     </Button>
                     {isClient && browserSupportsSpeechRecognition && (
                       <VoiceInput
