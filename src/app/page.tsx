@@ -47,6 +47,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { z } from 'zod';
+import { parsePdf } from '@/lib/pdf-parser';
 
 
 export const maxDuration = 120;
@@ -138,7 +139,8 @@ export default function Home() {
 
   type DocumentContext = {
     name: string;
-    content: string;
+    content: string; // This will be a data URI for images/PDFs, or plain text for .txt/.md
+    originalContent?: string; // To store original data URI for PDFs after parsing
   };
 
   type Answer = NonNullable<AskDocumentOutput['answers']>[0];
@@ -271,6 +273,16 @@ export default function Home() {
   
     try {
       const dataUri = await readFileAsDataURL(file);
+
+      // If it's a PDF, parse it to text.
+      if (file.type === 'application/pdf') {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const textContent = await parsePdf(buffer);
+        // We store the parsed text in `content` and keep the original Data URI for other uses if needed.
+        return { file: { name: file.name, content: textContent, originalContent: dataUri } };
+      }
+
       return { file: { name: file.name, content: dataUri } };
     } catch (error) {
       console.error('Error processing file:', error);
@@ -336,6 +348,8 @@ export default function Home() {
     const result = await processFile(file);
     
     if (result.file) {
+      // For single file uploads that might be PDFs, we need the parsed text for the AI
+      // but might want the original data URI for other purposes (like display).
       setFile(result.file);
     } else if (result.error) {
        toast({
@@ -389,7 +403,14 @@ export default function Home() {
     
     // Prepare the input for the AI action
     const input: AskDocumentInput = {
-      documents: documentFiles.map(f => ({ name: f.name, content: f.content })),
+       documents: documentFiles.map(f => {
+        // If the original content is available (i.e., it was a PDF), use that for the AI, 
+        // as it might be a data URI for an image or a PDF that the model can handle directly.
+        // Otherwise, use the parsed text content.
+        const isImage = f.content.startsWith('data:image');
+        const contentForAi = isImage ? (f.originalContent || f.content) : f.content;
+        return { name: f.name, content: contentForAi };
+      }),
       history: askHistory.map(turn => {
         if (turn.role === 'user' && turn.questions) {
             return { role: 'user', content: turn.questions.join('\n') };
@@ -932,6 +953,28 @@ export default function Home() {
                               <FileQuestion className="text-primary" />
                               {item.question}
                             </CardTitle>
+                             <div className="flex justify-end -mt-4">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-7 w-7"
+                                      onClick={() => handlePlayAudio(`${turn.id}-${index}`, item.summary)}
+                                      disabled={currentlyLoading !== null}
+                                    >
+                                      {currentlyLoading === `${turn.id}-${index}` ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Volume2 className={cn("h-4 w-4", currentlyPlaying === `${turn.id}-${index}` && "text-primary")} />
+                                      )}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Read summary aloud</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </div>
                           </CardHeader>
                           <CardContent className="space-y-6">
                             {/* Direct Answer */}
@@ -977,28 +1020,6 @@ export default function Home() {
                                 </Badge>
                               )}
                             </div>
-                             <div className="flex justify-end">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7"
-                                      onClick={() => handlePlayAudio(`${turn.id}-${index}`, item.summary)}
-                                      disabled={currentlyLoading !== null}
-                                    >
-                                      {currentlyLoading === `${turn.id}-${index}` ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <Volume2 className={cn("h-4 w-4", currentlyPlaying === `${turn.id}-${index}` && "text-primary")} />
-                                      )}
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Read summary aloud</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </div>
                           </CardContent>
                        </Card>
                     ))}
@@ -1513,7 +1534,7 @@ export default function Home() {
                   {documentFiles.map((file) => (
                     <div key={file.name} className="flex items-center justify-between p-2 bg-muted rounded-md text-sm">
                       <div className="flex items-center gap-2 truncate">
-                        {file.content.startsWith('data:image') ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
+                        {file.originalContent?.startsWith('data:image') || file.content.startsWith('data:image') ? <ImageIcon className="h-4 w-4 shrink-0" /> : <FileText className="h-4 w-4 shrink-0" />}
                         <span className="truncate">{file.name}</span>
                       </div>
                       <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeFile(file.name)}>

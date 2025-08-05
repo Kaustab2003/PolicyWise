@@ -34,7 +34,7 @@ const AnswerSchema = z.object({
     summary: z.string().describe('A detailed summary of the findings related to the question.'),
     keyPoints: z.array(z.string()).describe('A bulleted list of the most important supporting facts or clauses.'),
     confidenceScore: z.number().min(0).max(100).describe('A score from 0-100 indicating confidence in the answer.'),
-    sourceFile: z.string().optional().describe('The name of the file that contains the most relevant information for the answer.'),
+    sourceFile: z.string().optional().describe('The name of the file and the specific page number that contains the most relevant information for the answer (e.g., "policy.pdf, Page 3").'),
 });
 
 
@@ -57,6 +57,8 @@ const prompt = ai.definePrompt({
 
 For each user query, you MUST generate a complete and structured response with the following fields: 'question', 'directAnswer', 'summary', 'keyPoints', 'confidenceScore', and 'sourceFile'.
 
+The document content may contain page markers like "--- Page 1 ---", "--- Page 2 ---", etc. You must use these markers to identify the page number for your source citations.
+
 Follow these steps for each user query:
 1.  **Analyze the User's Query**: First, understand the core intent of the user's question. What specific information are they looking for?
 2.  **Scan Documents for Keywords**: Identify keywords and phrases in the query. Scan all provided documents for these keywords and related concepts.
@@ -66,7 +68,7 @@ Follow these steps for each user query:
     - **summary**: Write a detailed summary that elaborates on the direct answer, providing context and explaining the nuances found in the document.
     - **keyPoints**: Create a bulleted list of the most important facts, evidence, or clauses from the document that directly support your answer.
     - **confidenceScore**: Based on how explicitly the information is stated in the document, provide a confidence score from 0 to 100. A score of 100 means the document directly and unambiguously answers the question. A lower score indicates the answer is inferred or based on less direct evidence.
-    - **sourceFile**: You MUST identify which document was the primary source and set the 'sourceFile' field to the name of that file. If the answer is synthesized from multiple sources, pick the most relevant one.
+    - **sourceFile**: You MUST identify which document and which PAGE NUMBER was the primary source. Format the source as "FILENAME, Page NUMBER" (e.g., "benefits_guide.pdf, Page 5"). If the answer is synthesized from multiple pages, cite the most relevant one.
 5.  **Handle Missing Information**: If the documents DO NOT contain the information needed to answer a question, you MUST explicitly state this in the 'directAnswer', 'summary', and 'keyPoints' fields. Set the 'confidenceScore' to 0 and do not set a 'sourceFile'.
 
 **Context for the Conversation**
@@ -77,7 +79,7 @@ Follow these steps for each user query:
 ---
 Document Name: {{{name}}}
 Content:
-{{media url=content}}
+{{{content}}}
 ---
 {{/each}}
 {{/if}}
@@ -110,8 +112,23 @@ const askDocumentFlow = ai.defineFlow(
         [turn.role]: true,
       }
     }));
+
+    const parsableDocuments = input.documents.map(doc => {
+      // Decode the data URI to see if it's a non-image file that needs text extraction
+      const isPdf = doc.content.startsWith('data:application/pdf;base64,');
+      
+      if (isPdf) {
+         const base64Data = doc.content.split(',')[1];
+         const textContent = Buffer.from(base64Data, 'base64').toString('utf-8');
+         return { ...doc, content: textContent };
+      }
+      
+      // For images, we pass the data URI directly to the prompt's `media` helper.
+      // For already-extracted text, we just pass the content.
+      return { ...doc, content: `{{media url="${doc.content}"}}` };
+    });
     
-    const {output} = await prompt({...input, history: parsableHistory});
+    const {output} = await prompt({...input, history: parsableHistory, documents: parsableDocuments});
     return output!;
   }
 );

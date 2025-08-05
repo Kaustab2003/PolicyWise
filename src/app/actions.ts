@@ -182,7 +182,11 @@ export async function askDocumentAction(
         result.answers.map(async (item) => ({
             ...item,
             question: await translate(item.question, language),
-            answer: await translate(item.answer, language),
+            directAnswer: await translate(item.directAnswer, language),
+            summary: await translate(item.summary, language),
+            keyPoints: await Promise.all(
+              item.keyPoints.map((point) => translate(point, language))
+            ),
             sourceFile: item.sourceFile ? await translate(item.sourceFile, language) : undefined,
         }))
     );
