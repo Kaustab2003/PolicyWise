@@ -391,14 +391,14 @@ export default function Home() {
     const input: AskDocumentInput = {
       documents: documentFiles.map(f => ({ name: f.name, content: f.content })),
       history: askHistory.map(turn => {
-        // A bit of transformation to pass the right data to the action
         if (turn.role === 'user' && turn.questions) {
             return { role: 'user', content: turn.questions.join('\n') };
         }
         if (turn.role === 'model' && turn.answers) {
             return { role: 'model', content: turn.answers.map(a => a.answer).join('\n\n') };
         }
-        return {role: 'user', content: ''}; // Should not happen
+        // This case should ideally not be hit with valid ConversationTurn objects
+        return {role: turn.role, content: ''};
       }),
       userQueries: docQueries,
     };
@@ -931,7 +931,7 @@ export default function Home() {
                           <span className='truncate pr-4'>{item.question}</span>
                         </AccordionTrigger>
                         <AccordionContent className="prose prose-sm dark:prose-invert max-w-none pt-2">
-                          <div className="flex justify-end mb-2">
+                           <div className="flex justify-end mb-2">
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
