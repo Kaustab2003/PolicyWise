@@ -33,10 +33,12 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 
+export const maxDuration = 120;
+
 const defaultPolicy = `## TechGadget Pro - 1-Year Limited Warranty
 
 ### 1. COVERAGE
-This Limited Warranty covers your TechGadget Pro (the "Product") against defects in materials and workmanship when used normally in accordance with TechGadget's published guidelines for a period of ONE (1) YEAR from the date of original retail purchase by the end-user purchaser ("Warranty Period"). TechGadget’s published guidelines include but are not limited to information contained in technical specifications, user manuals and service communications.
+This Limited Warranty covers your TechGadget Pro (the "Product") against defects in materials and workmanship when used normally in accordance with TechGadget's published guidelines for a period of ONE (1) YEAR from the date of original retail purchase by the end-user purchaser ("Warranty Period"). TechGadget’s published guidelines include but are not to limited to information contained in technical specifications, user manuals and service communications.
 
 ### 2. EXCLUSIONS
 This Warranty does not apply to:
