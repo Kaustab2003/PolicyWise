@@ -1,3 +1,4 @@
+
 'use server';
 
 import {
@@ -18,7 +19,6 @@ import { generateSpeech, type GenerateSpeechOutput } from '@/ai/flows/generate-s
 import type { GenerateSummaryFromQueryInput, SuggestPolicyImprovementsInput, SummarizeDocumentInput, TranslateTextInput, ComplianceCheckInput, RiskDetectionInput, GenerateSpeechInput, AskDocumentInput } from './page';
 import { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import { AskDocumentOutput } from '@/ai/flows/ask-document';
-import pdf from 'pdf-parse';
 
 
 async function translate(text: string, targetLanguage: string): Promise<string> {
@@ -29,39 +29,6 @@ async function translate(text: string, targetLanguage: string): Promise<string> 
   // No try/catch here, as it will be handled by the calling action
   const result = await translateText({ text, targetLanguage });
   return result.translatedText;
-}
-
-export async function parsePdfAction(
-  dataUri: string
-): Promise<{ data: string | null; error: string | null }> {
-  try {
-    if (!dataUri.startsWith('data:application/pdf;base64,')) {
-      throw new Error('Invalid PDF data URI');
-    }
-    
-    const base64Data = dataUri.split(',')[1];
-    const buffer = Buffer.from(base64Data, 'base64');
-    
-    // Use the built-in page-splitting capabilities of pdf-parse
-    const data = await pdf(buffer);
-
-    // `data.text` can have page breaks. We will make them more explicit for the AI.
-    // The form feed character ('\f') is a common page delimiter from pdf-parse.
-    const pages = data.text.split('\f'); 
-    let paginatedText = '';
-    pages.forEach((pageContent, i) => {
-        paginatedText += `--- Page ${i + 1} ---\n${pageContent.trim()}\n\n`;
-    });
-
-    return { data: paginatedText, error: null };
-  } catch (e) {
-    console.error('parsePdfAction failed:', e);
-    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-    return {
-      data: null,
-      error: `Failed to parse PDF: ${errorMessage}`,
-    };
-  }
 }
 
 export async function generateSpeechAction(

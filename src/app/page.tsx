@@ -4,7 +4,7 @@
 
 import 'regenerator-runtime/runtime';
 import { useState, useRef, useEffect } from 'react';
-import { askDocumentAction, improveAction, summarizeAction, translateAction, summarizeDocumentAction, complianceCheckAction, riskDetectionAction, generateSpeechAction, parsePdfAction } from './actions';
+import { askDocumentAction, improveAction, summarizeAction, translateAction, summarizeDocumentAction, complianceCheckAction, riskDetectionAction, generateSpeechAction } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -49,6 +49,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { z } from 'zod';
+import pdf from 'pdf-parse';
 
 
 export const maxDuration = 120;
@@ -260,17 +261,29 @@ export default function Home() {
     });
   };
 
+  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = (error) => reject(error);
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
   const processFile = async (
     file: File
   ): Promise<{ file?: DocumentContext; error?: string }> => {
     try {
       if (file.type === 'application/pdf') {
+        const arrayBuffer = await readFileAsArrayBuffer(file);
+        const data = await pdf(arrayBuffer);
         const dataUri = await readFileAsDataURL(file);
-        const result = await parsePdfAction(dataUri);
-        if (result.error || !result.data) {
-          throw new Error(result.error || 'Failed to parse PDF.');
+        let paginatedText = '';
+        const pages = data.text.split('\f');
+        for (let i = 0; i < pages.length; i++) {
+          paginatedText += `--- Page ${i + 1} ---\n${pages[i].trim()}\n\n`;
         }
-        return { file: { name: file.name, content: result.data, originalContent: dataUri } };
+        return { file: { name: file.name, content: paginatedText, originalContent: dataUri } };
       }
       
       if (file.type === 'text/plain') {
@@ -1834,5 +1847,6 @@ const ResultsSkeleton = () => (
     </Card>
   </div>
 );
+
 
 
