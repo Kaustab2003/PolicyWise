@@ -727,7 +727,7 @@ export default function Home() {
                     <AccordionTrigger className="text-left font-semibold hover:no-underline">
                       <div className="flex items-center gap-2">
                         <span>{item.riskArea}</span>
-                        <Badge variant="destructive">{item.riskLevel}</Badge>
+                        <Badge variant={item.riskLevel === 'Critical' || item.riskLevel === 'High' ? 'destructive' : 'secondary'}>{item.riskLevel}</Badge>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="prose prose-sm dark:prose-invert max-w-none pt-2">

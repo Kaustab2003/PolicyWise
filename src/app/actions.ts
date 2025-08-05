@@ -101,7 +101,7 @@ export async function riskDetectionAction(
       }))
     );
 
-    return { data: { overallRiskAssessment: translatedOverallRiskAssessment, riskReport: translatedRiskReport }, error: null };
+    return { data: { ...result, overallRiskAssessment: translatedOverallRiskAssessment, riskReport: translatedRiskReport }, error: null };
   } catch (e) {
     console.error('riskDetectionAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
