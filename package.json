@@ -7,7 +7,7 @@
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
-    "postbuild": "cp src/lib/pdf-parser-worker.js .next/server/app/",
+    "postbuild": "cp .next/server/src/lib/pdf-parser-worker.js .next/server/app/",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
