@@ -37,23 +37,21 @@ export async function parsePdfAction(
     if (!dataUri.startsWith('data:application/pdf;base64,')) {
       throw new Error('Invalid PDF data URI');
     }
-    // This is a temporary workaround to get the host for the fetch call.
-    // In a real production environment, this should be handled more robustly,
-    // for example, by using an environment variable for the base URL.
-    const host = 'http://localhost:9002';
     
-    const response = await fetch(`${host}/api/parse-pdf`, {
+    // Making a fetch call to the API route from a server action.
+    // We use a relative path, and Next.js handles it correctly on the server.
+    const response = await fetch(new URL('/api/parse-pdf', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dataUri }),
     });
 
-    const result = await response.json();
-
     if (!response.ok) {
-        throw new Error(result.error || `Server responded with ${response.status}`);
+        const errorResult = await response.json().catch(() => ({ error: `Server responded with ${response.status}` }));
+        throw new Error(errorResult.error || `Server responded with ${response.status}`);
     }
 
+    const result = await response.json();
     return { data: result.text, error: null };
   } catch (e) {
     console.error('parsePdfAction failed:', e);
@@ -310,5 +308,3 @@ export async function improveAction(
     };
   }
 }
-
-    
