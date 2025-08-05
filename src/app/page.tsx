@@ -766,7 +766,6 @@ export default function Home() {
                 onChange={handleSummarizeFileChange}
                 className="hidden"
                 accept=".txt,.md,.pdf,.jpg,.jpeg,.png"
-                disabled={!!summarizeFile}
               />
               {!summarizeFile && (
                 <Button
