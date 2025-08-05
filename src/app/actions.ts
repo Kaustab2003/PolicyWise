@@ -88,11 +88,11 @@ export async function parsePdfAction(formData: FormData): Promise<{
       const documentContent = await parsePdf(Buffer.from(arrayBuffer));
       return { data: { documentContent }, error: null };
     } catch (parseError) {
-      console.error('PDF parsing itself failed:', parseError);
-      return {
-        data: null,
-        error: 'Failed to parse PDF. The file may be corrupt or malformed.',
-      };
+       console.error('PDF parsing itself failed:', parseError);
+       return {
+         data: null,
+         error: 'Failed to parse PDF. The file may be corrupt, encrypted, or in an unsupported format. Please try saving the file as a new PDF and upload it again.',
+       };
     }
   } catch (e) {
     console.error('parsePdfAction failed:', e);
@@ -100,7 +100,7 @@ export async function parsePdfAction(formData: FormData): Promise<{
       e instanceof Error ? e.message : 'An unknown error occurred.';
     return {
       data: null,
-      error: `Failed to parse PDF: ${errorMessage}`,
+      error: `Failed to process PDF: ${errorMessage}`,
     };
   }
 }
