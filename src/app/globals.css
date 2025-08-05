@@ -86,6 +86,10 @@ body {
   .dark body {
     background-image: linear-gradient(to bottom right, hsl(270, 50%, 15%), hsl(330, 60%, 15%), #000);
   }
+
+  b, strong {
+    @apply text-primary;
+  }
 }
 
 @layer components {
