@@ -3,20 +3,22 @@
 import {
   generateSummaryFromQuery,
   type GenerateSummaryFromQueryOutput,
+  type GenerateSummaryFromQueryInput,
 } from '@/ai/flows/generate-summary-from-query';
 import {
   suggestPolicyImprovements,
   type SuggestPolicyImprovementsOutput,
+  type SuggestPolicyImprovementsInput,
 } from '@/ai/flows/suggest-policy-improvements';
 import {
   askDocument,
   type AskDocumentOutput,
-  type DocumentContext,
+  type AskDocumentInput,
 } from '@/ai/flows/ask-document';
-import { summarizeDocument, type SummarizeDocumentOutput } from '@/ai/flows/summarize-document';
-import { translateText, type TranslateTextOutput } from '@/ai/flows/translate-text';
-import { complianceCheck, type ComplianceCheckOutput } from '@/ai/flows/compliance-checker';
-import { riskDetection, type RiskDetectionOutput } from '@/ai/flows/risk-detection';
+import { summarizeDocument, type SummarizeDocumentOutput, type SummarizeDocumentInput } from '@/ai/flows/summarize-document';
+import { translateText, type TranslateTextOutput, type TranslateTextInput } from '@/ai/flows/translate-text';
+import { complianceCheck, type ComplianceCheckOutput, type ComplianceCheckInput } from '@/ai/flows/compliance-checker';
+import { riskDetection, type RiskDetectionOutput, type RiskDetectionInput } from '@/ai/flows/risk-detection';
 
 
 async function translate(text: string, targetLanguage: string): Promise<string> {
@@ -30,19 +32,15 @@ async function translate(text: string, targetLanguage: string): Promise<string> 
 }
 
 export async function complianceCheckAction(
-  policyDocument: string,
-  complianceStandard: string,
+  complianceCheckInput: ComplianceCheckInput,
   language: string,
 ): Promise<{ data: ComplianceCheckOutput | null; error: string | null }> {
-  if (!policyDocument || !complianceStandard) {
+  if (!complianceCheckInput.policyDocument || !complianceCheckInput.complianceStandard) {
     return { data: null, error: 'Policy document and compliance standard are required.' };
   }
 
   try {
-    const result = await complianceCheck({
-      policyDocument,
-      complianceStandard,
-    });
+    const result = await complianceCheck(complianceCheckInput);
     
     const translatedOverallCompliance = await translate(result.overallCompliance, language);
     const translatedComplianceReport = await Promise.all(
@@ -65,17 +63,15 @@ export async function complianceCheckAction(
 }
 
 export async function riskDetectionAction(
-  policyDocument: string,
+  riskDetectionInput: RiskDetectionInput,
   language: string,
 ): Promise<{ data: RiskDetectionOutput | null; error: string | null }> {
-  if (!policyDocument) {
+  if (!riskDetectionInput.policyDocument) {
     return { data: null, error: 'Policy document is required.' };
   }
 
   try {
-    const result = await riskDetection({
-      policyDocument,
-    });
+    const result = await riskDetection(riskDetectionInput);
     
     const translatedOverallRiskAssessment = await translate(result.overallRiskAssessment, language);
     const translatedRiskReport = await Promise.all(
@@ -99,18 +95,14 @@ export async function riskDetectionAction(
 }
 
 export async function summarizeDocumentAction(
-  documentContent: string,
-  language: string,
+  summarizeDocumentInput: SummarizeDocumentInput,
 ): Promise<{ data: SummarizeDocumentOutput | null; error: string | null }> {
-  if (!documentContent) {
+  if (!summarizeDocumentInput.documentContent) {
     return { data: null, error: 'Document content is required.' };
   }
 
   try {
-    const result = await summarizeDocument({
-      documentContent,
-      targetLanguage: language,
-    });
+    const result = await summarizeDocument(summarizeDocumentInput);
     return { data: result, error: null };
   } catch (e) {
     console.error('summarizeDocumentAction failed:', e);
@@ -123,15 +115,14 @@ export async function summarizeDocumentAction(
 }
 
 export async function translateAction(
-  textToTranslate: string,
-  targetLanguage: string,
+  translateTextInput: TranslateTextInput,
 ): Promise<{ data: TranslateTextOutput | null; error: string | null }> {
-  if (!textToTranslate) {
+  if (!translateTextInput.text) {
     return { data: null, error: 'Text to translate is required.' };
   }
 
   try {
-    const translatedText = await translate(textToTranslate, targetLanguage);
+    const translatedText = await translate(translateTextInput.text, translateTextInput.targetLanguage);
     return { data: { translatedText }, error: null };
   } catch (e) {
     console.error('translateAction failed:', e);
@@ -144,11 +135,10 @@ export async function translateAction(
 }
 
 export async function askDocumentAction(
-  documents: DocumentContext[],
-  userQueries: string[],
+  askDocumentInput: AskDocumentInput,
   language: string,
 ): Promise<{ data: AskDocumentOutput | null; error: string | null }> {
-  if (!documents || documents.length === 0 || !userQueries || userQueries.length === 0) {
+  if (!askDocumentInput.documents || askDocumentInput.documents.length === 0 || !askDocumentInput.userQueries || askDocumentInput.userQueries.length === 0) {
     return {
       data: null,
       error: 'Documents and at least one user query are required.',
@@ -156,9 +146,9 @@ export async function askDocumentAction(
   }
 
   try {
-    const translatedQueries = await Promise.all(userQueries.map(query => translate(query, 'en')));
+    const translatedQueries = await Promise.all(askDocumentInput.userQueries.map(query => translate(query, 'en')));
     const result = await askDocument({
-      documents,
+      ...askDocumentInput,
       userQueries: translatedQueries,
     });
     
@@ -183,11 +173,10 @@ export async function askDocumentAction(
 }
 
 export async function summarizeAction(
-  policyDocument: string,
-  userQueries: string[],
+  generateSummaryFromQueryInput: GenerateSummaryFromQueryInput,
   language: string,
 ): Promise<{ data: GenerateSummaryFromQueryOutput | null; error: string | null }> {
-  if (!policyDocument || !userQueries || userQueries.length === 0) {
+  if (!generateSummaryFromQueryInput.policyDocument || !generateSummaryFromQueryInput.userQueries || generateSummaryFromQueryInput.userQueries.length === 0) {
     return {
       data: null,
       error: 'Policy document and at least one user query are required.',
@@ -195,9 +184,9 @@ export async function summarizeAction(
   }
 
   try {
-    const translatedQueries = await Promise.all(userQueries.map(q => translate(q, 'en')));
+    const translatedQueries = await Promise.all(generateSummaryFromQueryInput.userQueries.map(q => translate(q, 'en')));
     const result = await generateSummaryFromQuery({
-      policyDocument,
+      ...generateSummaryFromQueryInput,
       userQueries: translatedQueries,
       clauseClassifications: 'Coverage, Exclusion, Limit, Definition, Service',
     });
@@ -225,20 +214,18 @@ export async function summarizeAction(
 }
 
 export async function improveAction(
-  policyDocument: string,
+  suggestPolicyImprovementsInput: SuggestPolicyImprovementsInput,
   language: string,
 ): Promise<{
   data: SuggestPolicyImprovementsOutput | null;
   error: string | null;
 }> {
-  if (!policyDocument) {
+  if (!suggestPolicyImprovementsInput.policyDocument) {
     return { data: null, error: 'Policy document is required.' };
   }
 
   try {
-    const result = await suggestPolicyImprovements({
-      policyDocument,
-    });
+    const result = await suggestPolicyImprovements(suggestPolicyImprovementsInput);
     
     const translatedSummary = await translate(result.summary, language);
     const translatedImprovements = await Promise.all(

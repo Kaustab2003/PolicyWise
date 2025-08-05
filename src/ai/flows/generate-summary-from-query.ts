@@ -40,11 +40,14 @@ const generateSummaryPrompt = ai.definePrompt({
   output: {schema: GenerateSummaryFromQueryOutputSchema},
   prompt: `You are an AI assistant specialized in analyzing policy documents based on user queries.
 
-  Given a policy document and a list of user queries, you must provide a separate, detailed answer for each query.
-  For each query, generate a concise and accurate summary that directly answers it. Also, identify the most relevant clauses or sections from the document that support your summary. Finally, provide a confidence score (from 0 to 1) for each summary.
+  Given a policy document with pre-classified clauses and a list of user queries, you must provide a separate, detailed answer for each query.
+  For each query, use the clause classifications to inform your reasoning. Generate a concise and accurate summary that directly answers the question. Also, identify the most relevant clauses or sections from the document that support your summary. Finally, provide a confidence score (from 0 to 1) for each summary.
 
-  Policy Document: {{{policyDocument}}}
-  Clause Classifications: {{{clauseClassifications}}}
+  Policy Document:
+  {{{policyDocument}}}
+
+  Clause Classifications:
+  {{{clauseClassifications}}}
 
   User Queries:
   {{#each userQueries}}
