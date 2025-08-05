@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
@@ -40,7 +40,7 @@ This Limited Warranty covers your TechGadget Pro (the "Product") against defects
 ### 2. EXCLUSIONS
 This Warranty does not apply to:
 a) consumable parts, such as batteries or protective coatings that are designed to diminish over time, unless failure has occurred due to a defect in materials or workmanship;
-b) cosmetic damage, including but not limited to scratches, dents and broken plastic on ports unless failure has occurred due to a defect in materials or workmanship;
+b) cosmetic damage, including but not to limited to scratches, dents and broken plastic on ports unless failure has occurred due to a defect in materials or workmanship;
 c) damage caused by use with a third party component or product that does not meet the Product’s specifications;
 d) accidental damage, abuse, misuse, liquid contact, fire, earthquake or other external cause;
 e) to a Product that has been modified to alter functionality or capability without the written permission of TechGadget.
@@ -51,13 +51,18 @@ If a defect arises and a valid claim is received by TechGadget within the Warran
 
 export default function Home() {
   const [policy, setPolicy] = useState(defaultPolicy);
-  const [query, setQuery] = useState('Is accidental drop damage covered?');
+  
+  // State for multiple questions
+  const [currentQuery, setCurrentQuery] = useState('');
+  const [queries, setQueries] = useState<string[]>(['Is accidental drop damage covered?']);
+  
   const [activeTab, setActiveTab] = useState<'query' | 'improve' | 'ask' | 'translate'>('query');
   const [language, setLanguage] = useState('en');
 
   // State for document Q&A
   const [documentFiles, setDocumentFiles] = useState<DocumentContext[]>([]);
-  const [documentQuery, setDocumentQuery] = useState('');
+  const [currentDocumentQuery, setCurrentDocumentQuery] = useState('');
+  const [documentQueries, setDocumentQueries] = useState<string[]>([]);
   const [askResult, setAskResult] = useState<AskDocumentOutput | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -88,12 +93,35 @@ export default function Home() {
   useEffect(() => {
     if (transcript) {
       if (activeTab === 'query') {
-        setQuery(transcript);
+        setCurrentQuery(transcript);
       } else if (activeTab === 'ask') {
-        setDocumentQuery(transcript);
+        setCurrentDocumentQuery(transcript);
       }
     }
   }, [transcript, activeTab]);
+
+  const handleAddQuery = () => {
+    if (currentQuery.trim() && !queries.includes(currentQuery.trim())) {
+      setQueries([...queries, currentQuery.trim()]);
+      setCurrentQuery('');
+    }
+  };
+
+  const handleRemoveQuery = (index: number) => {
+    setQueries(queries.filter((_, i) => i !== index));
+  };
+  
+  const handleAddDocumentQuery = () => {
+    if (currentDocumentQuery.trim() && !documentQueries.includes(currentDocumentQuery.trim())) {
+      setDocumentQueries([...documentQueries, currentDocumentQuery.trim()]);
+      setCurrentDocumentQuery('');
+    }
+  };
+
+  const handleRemoveDocumentQuery = (index: number) => {
+    setDocumentQueries(documentQueries.filter((_, i) => i !== index));
+  };
+
 
   const readFileAsDataURL = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -175,10 +203,14 @@ export default function Home() {
   }
 
   const handleAskDocument = async () => {
+    if (documentQueries.length === 0) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please add at least one question.' });
+      return;
+    }
     setIsLoading(true);
     setSummaryResult(null);
     setImprovementResult(null);
-    const result = await askDocumentAction(documentFiles, documentQuery, language);
+    const result = await askDocumentAction(documentFiles, documentQueries, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -193,10 +225,14 @@ export default function Home() {
   };
 
   const handleSummarize = async () => {
+    if (queries.length === 0) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please add at least one question.' });
+      return;
+    }
     setIsLoading(true);
     setImprovementResult(null);
     setAskResult(null);
-    const result = await summarizeAction(policy, query, language);
+    const result = await summarizeAction(policy, queries, language);
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -282,80 +318,82 @@ export default function Home() {
 
     if (activeTab === 'ask' && askResult) {
        return (
-        <Card className="animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="text-primary" />
-              AI Answer
-            </CardTitle>
-             <CardDescription>
-              This answer is generated by AI based on your query and the uploaded documents.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-             <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-              {askResult.answer}
-            </div>
-            {askResult.sourceFile && (
-              <div className="pt-4">
-                <Badge variant="secondary">
-                  <FileText className="mr-1.5 h-3 w-3" />
-                  Source: {askResult.sourceFile}
-                </Badge>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
+          {askResult.answers.map((item, index) => (
+             <Card key={index}>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <FileQuestion className="text-primary" />
+                      {item.question}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+                    {item.answer}
+                  </div>
+                  {item.sourceFile && (
+                    <div className="pt-2">
+                      <Badge variant="secondary">
+                        <FileText className="mr-1.5 h-3 w-3" />
+                        Source: {item.sourceFile}
+                      </Badge>
+                    </div>
+                  )}
+                </CardContent>
+             </Card>
+          ))}
+        </div>
       );
     }
 
     if (activeTab === 'query' && summaryResult) {
       return (
         <div className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="text-primary" />
-                AI Summary
-              </CardTitle>
-              <CardDescription>
-                This summary is generated by AI based on your query and the provided policy.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">{summaryResult.summary}</p>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-sm text-muted-foreground">
-                  <span>Confidence Score</span>
-                  <span>{Math.round(summaryResult.confidenceScore * 100)}%</span>
-                </div>
-                <Progress value={summaryResult.confidenceScore * 100} />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookMarked className="text-primary" />
-                Relevant Clauses
-              </CardTitle>
-              <CardDescription>
-                These clauses were identified as most relevant to your query.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {summaryResult.relevantClauses.map((clause, index) => (
-                  <pre
-                    key={index}
-                    className="bg-muted p-4 rounded-md overflow-x-auto"
-                  >
-                    <code className="font-code text-sm">{clause}</code>
-                  </pre>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {summaryResult.answers.map((item, index) => (
+             <div key={index} className="space-y-6">
+              <Card>
+                <CardHeader>
+                   <CardTitle className="flex items-center gap-2 text-lg">
+                      <FileQuestion className="text-primary" />
+                      {item.question}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="mb-4">{item.summary}</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm text-muted-foreground">
+                      <span>Confidence Score</span>
+                      <span>{Math.round(item.confidenceScore * 100)}%</span>
+                    </div>
+                    <Progress value={item.confidenceScore * 100} />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookMarked className="text-primary" />
+                    Relevant Clauses
+                  </CardTitle>
+                  <CardDescription>
+                    These clauses were identified as most relevant to this question.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {item.relevantClauses.map((clause, clauseIndex) => (
+                      <pre
+                        key={clauseIndex}
+                        className="bg-muted p-4 rounded-md overflow-x-auto"
+                      >
+                        <code className="font-code text-sm">{clause}</code>
+                      </pre>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+             </div>
+          ))}
         </div>
       );
     }
@@ -405,7 +443,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle>Analyze a Policy</CardTitle>
             <CardDescription>
-              Enter a policy document and ask a question to get an AI-powered summary.
+              Enter a policy and ask one or more questions to get AI-powered summaries.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -420,21 +458,30 @@ export default function Home() {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="user-query" className="font-semibold">Your Question</label>
+              <label htmlFor="user-query" className="font-semibold">Your Questions</label>
               <div className="flex gap-2">
-                <Tooltip>
+                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Input
                       id="user-query"
-                      placeholder="e.g., Is water damage covered?"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Type a question and press Enter..."
+                      value={currentQuery}
+                      onChange={(e) => setCurrentQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddQuery();
+                        }
+                      }}
                     />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Type or speak in your preferred language</p>
+                    <p>Press Enter to add the question to the list</p>
                   </TooltipContent>
                 </Tooltip>
+                 <Button variant="ghost" size="icon" onClick={handleAddQuery} aria-label="Add question">
+                  <PlusCircle />
+                </Button>
                 {isClient && browserSupportsSpeechRecognition && (
                   <VoiceInput
                     onToggle={handleVoiceSearch}
@@ -443,12 +490,29 @@ export default function Home() {
                 )}
               </div>
             </div>
+            
+            {queries.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Added Questions:</p>
+                <div className="flex flex-wrap gap-2">
+                  {queries.map((q, index) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1.5">
+                      {q}
+                      <button onClick={() => handleRemoveQuery(index)} className="rounded-full hover:bg-muted-foreground/20">
+                        <X className="h-3 w-3"/>
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <Button
               onClick={handleSummarize}
-              disabled={isLoading || !policy || !query}
+              disabled={isLoading || !policy || queries.length === 0}
               className={cn(commonButtonClasses, "bg-primary hover:bg-primary/90 text-primary-foreground")}
             >
-              {isLoading && activeTab === 'query' ? 'Analyzing...' : <><FileSearch className="mr-2"/>Analyze Query</>}
+              {isLoading && activeTab === 'query' ? 'Analyzing...' : <><FileSearch className="mr-2"/>Analyze Queries</>}
             </Button>
           </CardContent>
         </Card>
@@ -540,21 +604,30 @@ export default function Home() {
               {documentFiles.length > 0 && (
               <>
                 <div className="space-y-2">
-                  <label htmlFor="doc-query" className="font-semibold">Your Question</label>
+                  <label htmlFor="doc-query" className="font-semibold">Your Questions</label>
                   <div className="flex gap-2">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Input
                           id="doc-query"
-                          placeholder="Ask anything about the documents..."
-                          value={documentQuery}
-                          onChange={(e) => setDocumentQuery(e.target.value)}
+                          placeholder="Type a question and press Enter..."
+                          value={currentDocumentQuery}
+                          onChange={(e) => setCurrentDocumentQuery(e.target.value)}
+                           onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddDocumentQuery();
+                            }
+                          }}
                         />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Type or speak in your preferred language</p>
+                        <p>Press Enter to add the question to the list</p>
                       </TooltipContent>
                     </Tooltip>
+                    <Button variant="ghost" size="icon" onClick={handleAddDocumentQuery} aria-label="Add question">
+                      <PlusCircle />
+                    </Button>
                     {isClient && browserSupportsSpeechRecognition && (
                       <VoiceInput
                           onToggle={handleVoiceSearch}
@@ -563,12 +636,30 @@ export default function Home() {
                     )}
                   </div>
                 </div>
+
+                {documentQueries.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Added Questions:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {documentQueries.map((q, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-1.5">
+                          {q}
+                           <button onClick={() => handleRemoveDocumentQuery(index)} className="rounded-full hover:bg-muted-foreground/20">
+                            <X className="h-3 w-3"/>
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+
                 <Button
                   onClick={handleAskDocument}
-                  disabled={isLoading || !documentQuery}
+                  disabled={isLoading || documentQueries.length === 0}
                   className={cn(commonButtonClasses, "bg-primary hover:bg-primary/90 text-primary-foreground")}
                 >
-                  {isLoading && activeTab === 'ask' ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Question</>}
+                  {isLoading && activeTab === 'ask' ? 'Thinking...' : <><FileQuestion className="mr-2"/>Ask Questions</>}
                 </Button>
               </>
             )}

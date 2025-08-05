@@ -72,27 +72,33 @@ export async function parsePdfAction(formData: FormData): Promise<{
 
 export async function askDocumentAction(
   documents: DocumentContext[],
-  userQuery: string,
+  userQueries: string[],
   language: string,
 ): Promise<{ data: AskDocumentOutput | null; error: string | null }> {
-  if (!documents || documents.length === 0 || !userQuery) {
+  if (!documents || documents.length === 0 || !userQueries || userQueries.length === 0) {
     return {
       data: null,
-      error: 'Documents and a user query are required.',
+      error: 'Documents and at least one user query are required.',
     };
   }
 
   try {
-    const translatedQuery = await translate(userQuery, 'en');
+    const translatedQueries = await Promise.all(userQueries.map(query => translate(query, 'en')));
     const result = await askDocument({
       documents,
-      userQuery: translatedQuery,
+      userQueries: translatedQueries,
     });
     
-    const translatedAnswer = await translate(result.answer, language);
-    const translatedSource = result.sourceFile ? await translate(result.sourceFile, language) : '';
+    const translatedAnswers = await Promise.all(
+        result.answers.map(async (item) => ({
+            ...item,
+            question: await translate(item.question, language),
+            answer: await translate(item.answer, language),
+            sourceFile: item.sourceFile ? await translate(item.sourceFile, language) : undefined,
+        }))
+    );
 
-    return { data: { ...result, answer: translatedAnswer, sourceFile: translatedSource }, error: null };
+    return { data: { answers: translatedAnswers }, error: null };
   } catch (e) {
     console.error('askDocumentAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
@@ -105,30 +111,36 @@ export async function askDocumentAction(
 
 export async function summarizeAction(
   policyDocument: string,
-  userQuery: string,
+  userQueries: string[],
   language: string,
 ): Promise<{ data: GenerateSummaryFromQueryOutput | null; error: string | null }> {
-  if (!policyDocument || !userQuery) {
+  if (!policyDocument || !userQueries || userQueries.length === 0) {
     return {
       data: null,
-      error: 'Policy document and user query are required.',
+      error: 'Policy document and at least one user query are required.',
     };
   }
 
   try {
-    const translatedQuery = await translate(userQuery, 'en');
+    const translatedQueries = await Promise.all(userQueries.map(q => translate(q, 'en')));
     const result = await generateSummaryFromQuery({
       policyDocument,
-      userQuery: translatedQuery,
+      userQueries: translatedQueries,
       clauseClassifications: 'Coverage, Exclusion, Limit, Definition, Service',
     });
 
-    const translatedSummary = await translate(result.summary, language);
-    const translatedClauses = await Promise.all(
-      result.relevantClauses.map((clause) => translate(clause, language))
+    const translatedAnswers = await Promise.all(
+        result.answers.map(async (item) => ({
+            ...item,
+            question: await translate(item.question, language),
+            summary: await translate(item.summary, language),
+            relevantClauses: await Promise.all(
+                item.relevantClauses.map((clause) => translate(clause, language))
+            ),
+        }))
     );
 
-    return { data: { ...result, summary: translatedSummary, relevantClauses: translatedClauses }, error: null };
+    return { data: { answers: translatedAnswers }, error: null };
   } catch (e) {
     console.error('summarizeAction failed:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
