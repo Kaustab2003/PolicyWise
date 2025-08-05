@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-   webpack: (config, { isServer }) => {
+   webpack: (config, { isServer, buildId }) => {
     // This is to ensure our worker file is bundled correctly by Next.js/Webpack.
     if (isServer) {
         config.entry = {
