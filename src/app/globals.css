@@ -115,80 +115,40 @@ body {
     }
   }
 
-  .ai-background-advanced {
-    background: 
-      radial-gradient(ellipse 800px 600px at center, 
-        hsl(280, 50%, 20%) 0%,
-        transparent 50%
-      ),
-      linear-gradient(135deg, 
-        hsl(260, 80%, 8%) 0%,
-        hsl(280, 60%, 5%) 50%,
-        hsl(240, 90%, 3%) 100%
-      );
-  }
-  
-  .orb-container {
+  .ai-background {
+    background: radial-gradient(circle at center, 
+      hsl(280, 100%, 15%) 0%,
+      hsl(260, 80%, 8%) 40%,
+      hsl(240, 90%, 5%) 100%
+    );
     position: relative;
-    width: 300px;
-    height: 300px;
+    overflow: hidden;
   }
-  
-  .orb-outer {
+
+  .glowing-orb {
     position: absolute;
-    width: 100%;
-    height: 100%;
-    -webkit-backface-visibility: hidden;
-    -moz-backface-visibility: hidden;
-    -webkit-transform: translate3d(0, 0, 0);
-    -moz-transform: translate3d(0, 0, 0);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
     background: radial-gradient(circle,
-      hsla(280, 100%, 60%, 0.3) 0%,
-      hsla(260, 80%, 50%, 0.2) 40%,
-      transparent 70%
+      hsl(280, 100%, 70%) 0%,
+      hsl(260, 80%, 50%) 30%,
+      hsl(240, 60%, 30%) 70%,
+      transparent 100%
     );
-    filter: blur(2px);
-  }
-  
-  .orb-inner {
-    position: absolute;
-    top: 25%;
-    left: 25%;
-    width: 150px;
-    height: 150px;
     border-radius: 50%;
-     background: radial-gradient(circle,
-      hsl(290, 100%, 75%) 0%,
-      hsl(270, 90%, 55%) 50%,
-      hsl(250, 70%, 35%) 100%
-    );
+    filter: blur(1px);
     box-shadow: 
-      0 0 30px hsl(280, 100%, 60%),
-      inset 0 0 20px hsl(290, 100%, 50%);
+      0 0 50px hsl(280, 100%, 60%),
+      0 0 100px hsl(260, 80%, 50%),
+      inset 0 0 50px hsl(280, 100%, 40%);
+    animation: pulse 3s ease-in-out infinite;
   }
 
-  @keyframes orb-rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-  
-  @keyframes glow-pulse {
-    0%, 100% { opacity: 0.8; }
-    50% { opacity: 1; }
-  }
-
-  @keyframes orb-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-
-  .animate-orb-rotate {
-    animation: orb-rotate 15s linear infinite;
-  }
-  .animate-glow-pulse {
-    animation: glow-pulse 4s ease-in-out infinite;
-  }
-  .animate-orb-pulse {
-    animation: orb-pulse 3s ease-in-out infinite;
+  @keyframes pulse {
+    0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
   }
 }

@@ -1654,7 +1654,7 @@ export default function Home() {
               </Button>
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-4 md:p-8 ai-background-advanced">
+          <main className="flex-1 overflow-auto p-4 md:p-8">
             <div className="grid md:grid-cols-2 gap-8 h-full">
               <div className="flex flex-col gap-4">
                 {renderCurrentTab()}
@@ -1683,11 +1683,7 @@ export default function Home() {
 const EmptyState = () => (
   <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 fade-in-up">
     <div className="relative flex items-center justify-center">
-       <div className="orb-container animate-orb-rotate">
-        <div className="orb-outer animate-glow-pulse" />
-        <div className="orb-inner animate-orb-pulse" />
-      </div>
-      <Bot className="h-12 w-12 text-primary absolute" />
+      <Bot className="h-12 w-12 text-primary" />
     </div>
     <h3 className="text-lg font-semibold text-foreground mt-8">Ready for Analysis</h3>
     <p className="mt-1">

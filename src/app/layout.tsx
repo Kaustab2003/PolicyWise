@@ -25,17 +25,20 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=PT+Sans:wght@400;700&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <SidebarProvider>
-            {children}
-          </SidebarProvider>
-          <Toaster />
-        </ThemeProvider>
+        <div className="ai-background">
+          <div className="glowing-orb" />
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <SidebarProvider>
+              {children}
+            </SidebarProvider>
+            <Toaster />
+          </ThemeProvider>
+        </div>
       </body>
     </html>
   );
