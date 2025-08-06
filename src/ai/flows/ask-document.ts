@@ -30,6 +30,7 @@ export type AskDocumentInput = z.infer<typeof AskDocumentInputSchema>;
 
 const AnswerSchema = z.object({
     question: z.string().describe('The original user question.'),
+    answerAffirmation: z.enum(['Yes', 'No', 'N/A']).describe('A simple "Yes" or "No" if the question can be answered that way. Otherwise, "N/A".'),
     directAnswer: z.string().describe('A direct, concise answer to the question.'),
     summary: z.string().describe('A detailed summary of the findings related to the question.'),
     keyPoints: z.array(z.string()).describe('A bulleted list of the most important supporting facts or clauses.'),
@@ -55,19 +56,20 @@ const prompt = ai.definePrompt({
   output: {schema: AskDocumentOutputSchema},
   prompt: `You are a highly-skilled AI analyst. Your task is to provide detailed and accurate answers to user questions based SOLELY on the content of the documents provided. Do not use any external knowledge.
 
-For each user query, you MUST generate a complete and structured response with the following fields: 'question', 'directAnswer', 'summary', 'keyPoints', 'confidenceScore', and 'sourceFile'.
+For each user query, you MUST generate a complete and structured response with the following fields: 'question', 'answerAffirmation', 'directAnswer', 'summary', 'keyPoints', 'confidenceScore', and 'sourceFile'.
 
 Follow these steps for each user query:
 1.  **Analyze the User's Query**: First, understand the core intent of the user's question. What specific information are they looking for?
 2.  **Scan ALL Documents**: You must scan every document provided to find relevant information. Do not stop after finding a potential answer in one document.
 3.  **Extract Relevant Facts**: From all documents, extract every piece of information that is relevant to the user's query. This includes direct statements, clauses, and data points.
 4.  **Synthesize the Answer and Generate Output**:
+    - **answerAffirmation**: If the question can be definitively answered with "Yes" or "No" based on the text, set this field to "Yes" or "No". Otherwise, set it to "N/A".
     - **directAnswer**: Provide a concise, one-sentence answer to the user's question based on the best information found across all documents.
     - **summary**: Write a detailed summary that elaborates on the direct answer, providing context and explaining the nuances found in the source document(s).
     - **keyPoints**: Create a bulleted list of the most important facts, evidence, or clauses from the document that directly support your answer.
     - **confidenceScore**: Based on how explicitly the information is stated in the document, provide a confidence score from 0 to 100. A score of 100 means the document directly and unambiguously answers the question. A lower score indicates the answer is inferred or based on less direct evidence.
     - **sourceFile**: You MUST identify which document was the primary source. Provide only the filename (e.g., "benefits_guide.pdf"). If information from multiple documents was used, list the most important one.
-5.  **Handle Missing Information**: If NONE of the documents contain the information needed to answer a question, you MUST explicitly state this in the 'directAnswer', 'summary', and 'keyPoints' fields. Set the 'confidenceScore' to 0 and do not set a 'sourceFile'.
+5.  **Handle Missing Information**: If NONE of the documents contain the information needed to answer a question, you MUST explicitly state this in the 'directAnswer', 'summary', and 'keyPoints' fields. Set 'answerAffirmation' to "N/A", 'confidenceScore' to 0, and do not set a 'sourceFile'.
 
 **Context for the Conversation**
 
@@ -112,12 +114,11 @@ const askDocumentFlow = ai.defineFlow(
     }));
 
     const parsableDocuments = input.documents.map(doc => {
-      // Check if the content is a data URI for an image.
-      const isImageDataUri = doc.content.startsWith('data:image');
+      // The content could be a data URI for an image, or it could be pre-parsed text from a PDF/TXT.
+      // We check if it looks like a data URI that should be handled by the `media` helper.
+      const isMediaDataUri = doc.content.startsWith('data:');
       
-      // If it's an image, wrap it in the media helper.
-      // Otherwise, it's pre-parsed text (from PDF, TXT, etc.), so pass it directly.
-      const content = isImageDataUri ? `{{media url="${doc.content}"}}` : doc.content;
+      const content = isMediaDataUri ? `{{media url="${doc.content}"}}` : doc.content;
 
       return { ...doc, content };
     });
