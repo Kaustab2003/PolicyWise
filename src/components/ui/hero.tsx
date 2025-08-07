@@ -30,7 +30,7 @@ const HeroSection = () => {
                 className="group gradient-primary hover:opacity-90 transition-all duration-300 animate-glow"
                 asChild
               >
-                <Link href="/">
+                <Link href="/app">
                   Get Started
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
