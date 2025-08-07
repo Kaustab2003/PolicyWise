@@ -94,10 +94,10 @@
     @apply bg-foreground/5 border border-foreground/10 backdrop-blur-lg;
   }
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-br from-primary to-accent;
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-pink-400 to-purple-500;
   }
   .gradient-primary {
-    @apply bg-gradient-to-br from-primary to-accent;
+    @apply bg-gradient-to-br from-pink-500 to-purple-600;
   }
   .fade-in-up {
     animation: fade-in-up 0.5s ease-out forwards;

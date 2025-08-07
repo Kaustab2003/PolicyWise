@@ -1,18 +1,14 @@
 'use client';
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Spline from '@splinetool/react-spline';
+import ParticleBackground from "../particle-background";
 
 const HeroSection = () => {
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Spline */}
-      <div className="absolute inset-0 w-full h-full">
-        <Spline
-          scene="https://prod.spline.design/HLszoxKGKHhxlWs3/scene.splinecode"
-        />
-      </div>
+      <ParticleBackground className="absolute inset-0 -z-10" />
       <div className="absolute inset-0 bg-background/80" />
       
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
@@ -28,7 +24,7 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-                className="group gradient-primary hover:opacity-90 transition-all duration-300 animate-glow"
+                className="group gradient-primary text-white hover:opacity-90 transition-all duration-300 animate-glow"
                 asChild
               >
                 <Link href="/app">
@@ -40,7 +36,7 @@ const HeroSection = () => {
               <Button 
                 variant="outline" 
                 size="lg"
-                className="glass-card border-primary/30 hover:border-primary/50 transition-all duration-300"
+                className="glass-card border-foreground/20 hover:border-foreground/30 hover:bg-foreground/5 transition-all duration-300"
                 asChild
               >
                 <Link href="/about">
