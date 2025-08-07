@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX, FileUp, Replace, Check, ChevronsUpDown, User, UserCircle, Volume2, Loader2 } from 'lucide-react';
+import { Sparkles, FileSearch, Bot, BookMarked, BrainCircuit, UploadCloud, FileQuestion, MessageSquareQuote, FileText, X, Image as ImageIcon, PlusCircle, CheckCircle, Printer, Download, FileSignature, ShieldCheck, AlertTriangle, ShieldX, FileUp, Replace, Check, ChevronsUpDown, User, UserCircle, Volume2, Loader2, ThumbsUp, ThumbsDown, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSummaryFromQueryOutput } from '@/ai/flows/generate-summary-from-query';
 import type { SuggestPolicyImprovementsOutput } from '@/ai/flows/suggest-policy-improvements';
@@ -936,6 +936,36 @@ export default function Home() {
     }
 
     if (activeTab === 'ask' && askHistory.length > 0) {
+      const AffirmationDisplay = ({ affirmation }: { affirmation: 'Yes' | 'No' | 'N/A' }) => {
+        let Icon, text, colorClass;
+        switch (affirmation) {
+          case 'Yes':
+            Icon = ThumbsUp;
+            text = 'Yes';
+            colorClass = 'text-green-500';
+            break;
+          case 'No':
+            Icon = ThumbsDown;
+            text = 'No';
+            colorClass = 'text-red-500';
+            break;
+          default:
+            Icon = HelpCircle;
+            text = 'N/A';
+            colorClass = 'text-muted-foreground';
+        }
+        return (
+          <div className={cn("flex items-center gap-3 rounded-lg bg-muted/50 p-4 border-l-4", 
+            affirmation === 'Yes' && 'border-green-500',
+            affirmation === 'No' && 'border-red-500',
+            affirmation === 'N/A' && 'border-yellow-500'
+          )}>
+            <Icon className={cn("h-8 w-8", colorClass)} />
+            <span className={cn("text-2xl font-bold", colorClass)}>{text}</span>
+          </div>
+        );
+      };
+
       return (
         <div className="space-y-4 fade-in-up">
           {askHistory.map((turn) => (
@@ -957,37 +987,39 @@ export default function Home() {
                     {turn.answers.map((item, index) => (
                        <Card key={index} className="bg-muted/30">
                           <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                              <FileQuestion className="text-primary" />
+                            <CardTitle className="flex items-center gap-2 text-base">
+                              <FileQuestion className="text-primary h-5 w-5" />
                               {item.question}
                             </CardTitle>
                           </CardHeader>
                           <CardContent className="space-y-6">
-                            <div className="flex justify-end -mt-2">
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7"
-                                      onClick={() => handlePlayAudio(`${turn.id}-${index}`, item.summary)}
-                                      disabled={currentlyLoading !== null}
-                                    >
-                                      {currentlyLoading === `${turn.id}-${index}` ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <Volume2 className={cn("h-4 w-4", currentlyPlaying === `${turn.id}-${index}` && "text-primary")} />
-                                      )}
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Read summary aloud</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </div>
+                            <div className="flex justify-between items-start">
+                              <AffirmationDisplay affirmation={item.answerAffirmation} />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7"
+                                    onClick={() => handlePlayAudio(`${turn.id}-${index}`, item.summary)}
+                                    disabled={currentlyLoading !== null}
+                                  >
+                                    {currentlyLoading === `${turn.id}-${index}` ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Volume2 className={cn("h-4 w-4", currentlyPlaying === `${turn.id}-${index}` && "text-primary")} />
+                                    )}
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Read summary aloud</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+
                             {/* Direct Answer */}
                             <div className="space-y-2">
-                              <p className="font-semibold text-primary">Answer</p>
+                              <p className="font-semibold text-primary">Direct Answer</p>
                               <p className="text-sm">{item.directAnswer}</p>
                             </div>
 
@@ -1854,5 +1886,3 @@ const ResultsSkeleton = () => (
     </Card>
   </div>
 );
-
-
