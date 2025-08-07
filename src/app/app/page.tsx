@@ -770,7 +770,7 @@ export default function App() {
       };
       return (
         <div className="space-y-6 fade-in-up">
-          <Card>
+          <Card className="glass-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="text-primary" />
@@ -783,7 +783,7 @@ export default function App() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="glass-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bot className="text-primary" />
@@ -816,7 +816,7 @@ export default function App() {
     if (activeTab === 'compliance' && complianceResult) {
       return (
         <div className="space-y-6 fade-in-up">
-          <Card>
+          <Card className="glass-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ShieldCheck className="text-primary" />
@@ -836,7 +836,7 @@ export default function App() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="glass-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bot className="text-primary" />
@@ -871,7 +871,7 @@ export default function App() {
     if (activeTab === 'summarize' && summarizeResult) {
       return (
         <div className="space-y-6 fade-in-up">
-          <Card>
+          <Card className="glass-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bot className="text-primary" />
@@ -888,7 +888,7 @@ export default function App() {
             </CardContent>
           </Card>
           {summarizeResult.keyPoints && summarizeResult.keyPoints.length > 0 && (
-            <Card>
+            <Card className="glass-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CheckCircle className="text-primary" />
@@ -916,7 +916,7 @@ export default function App() {
 
     if (activeTab === 'translate' && translationResult) {
       return (
-        <Card className="fade-in-up">
+        <Card className="fade-in-up glass-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bot className="text-primary" />
@@ -985,7 +985,7 @@ export default function App() {
                 {turn.role === 'model' && turn.answers && (
                   <div className="space-y-4">
                     {turn.answers.map((item, index) => (
-                       <Card key={index} className="bg-muted/30">
+                       <Card key={index} className="bg-muted/30 glass-card">
                           <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-base">
                               <FileQuestion className="text-primary h-5 w-5" />
@@ -1083,7 +1083,7 @@ export default function App() {
         <div className="space-y-6 fade-in-up">
           {summaryResult.answers.map((item, index) => (
              <div key={index} className="space-y-6">
-              <Card>
+              <Card className="glass-card">
                 <CardHeader>
                    <CardTitle className="flex items-center gap-2 text-lg">
                       <FileQuestion className="text-primary" />
@@ -1101,7 +1101,7 @@ export default function App() {
                   </div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="glass-card">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BookMarked className="text-primary" />
@@ -1134,7 +1134,7 @@ export default function App() {
       return (
         <div ref={improvementResultRef} className="space-y-6 fade-in-up">
             {/* Report Summary Card */}
-            <Card>
+            <Card className="glass-card">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <FileSignature className="text-primary"/>
@@ -1150,7 +1150,7 @@ export default function App() {
             </Card>
 
             {/* Improvement Suggestions Card */}
-            <Card>
+            <Card className="glass-card">
                 <CardHeader>
                     <div className="flex justify-between items-start">
                         <div className="flex-1">
@@ -1314,7 +1314,7 @@ export default function App() {
 
     if (activeTab === 'risk') {
       return (
-        <Card className="fade-in-up">
+        <Card className="fade-in-up glass-card">
           <CardHeader>
             <CardTitle>Risk Detection</CardTitle>
             <CardDescription>
@@ -1362,7 +1362,7 @@ export default function App() {
     
     if (activeTab === 'compliance') {
       return (
-        <Card className="fade-in-up">
+        <Card className="fade-in-up glass-card">
           <CardHeader>
             <CardTitle>Compliance Checker</CardTitle>
             <CardDescription>
@@ -1414,7 +1414,7 @@ export default function App() {
 
     if (activeTab === 'query') {
       return (
-        <Card className="fade-in-up">
+        <Card className="fade-in-up glass-card">
           <CardHeader>
             <CardTitle>Analyze a Policy</CardTitle>
             <CardDescription>
@@ -1489,7 +1489,7 @@ export default function App() {
 
     if (activeTab === 'improve') {
       return (
-        <Card className="fade-in-up">
+        <Card className="fade-in-up glass-card">
           <CardHeader>
             <CardTitle>Improve a Policy Draft</CardTitle>
             <CardDescription>
@@ -1537,7 +1537,7 @@ export default function App() {
 
     if (activeTab === 'ask') {
       return (
-        <Card className="fade-in-up">
+        <Card className="fade-in-up glass-card">
           <CardHeader>
             <CardTitle>Ask Document(s)</CardTitle>
             <CardDescription>
@@ -1645,7 +1645,7 @@ export default function App() {
 
     if (activeTab === 'summarize') {
       return (
-        <Card className="fade-in-up">
+        <Card className="fade-in-up glass-card">
           <CardHeader>
             <CardTitle>Summarize a Document</CardTitle>
             <CardDescription>
@@ -1705,7 +1705,7 @@ export default function App() {
     
     if (activeTab === 'translate') {
        return (
-        <Card className="fade-in-up">
+        <Card className="fade-in-up glass-card">
           <CardHeader>
             <CardTitle>Translate Text</CardTitle>
             <CardDescription>
@@ -1859,7 +1859,7 @@ const EmptyState = () => (
 
 const ResultsSkeleton = () => (
   <div className="space-y-6">
-    <Card>
+    <Card className="glass-card">
       <CardHeader>
         <Skeleton className="h-6 w-1/2" />
         <Skeleton className="h-4 w-3/4 mt-2" />
@@ -1874,7 +1874,7 @@ const ResultsSkeleton = () => (
         </div>
       </CardContent>
     </Card>
-    <Card>
+    <Card className="glass-card">
       <CardHeader>
         <Skeleton className="h-6 w-1/2" />
         <Skeleton className="h-4 w-3/4 mt-2" />

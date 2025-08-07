@@ -97,7 +97,7 @@ export default {
         },
         glow: {
           '0%': { 'box-shadow': '0 0 20px hsl(var(--primary) / 0.3)' },
-          '100%': { 'box-shadow': '0 0 40px hsl(var(--primary) / 0.6), 0 0 60px hsl(var(--secondary) / 0.3)' }
+          '100%': { 'box-shadow': '0 0 40px hsl(var(--primary) / 0.6), 0 0 60px hsl(var(--accent) / 0.3)' }
         },
       },
     },
