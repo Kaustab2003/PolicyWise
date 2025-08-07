@@ -31,10 +31,7 @@
     --chart-5: 340 75% 55%;
   
     /* Custom variables for the particle background */
-    --gradient-ai: radial-gradient(circle at 50% 50%, hsl(217 91% 60% / 0.1), hsl(270 80% 60% / 0.05) 50%, transparent 100%);
-    --gradient-orb: radial-gradient(circle, hsl(var(--primary) / 0.8), hsl(var(--secondary) / 0.8) 80%);
-    --shadow-glow: 0 0 20px hsl(var(--primary) / 0.3), 0 0 40px hsl(var(--primary) / 0.6), 0 0 60px hsl(var(--secondary) / 0.3);
-    --orb-glow: var(--primary);
+    --gradient-ai: radial-gradient(circle at 50% 50%, hsl(260 84% 60% / 0.15), transparent 70%);
   }
   .dark {
     --background: 240 10% 3.9%;
@@ -103,47 +100,4 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-
-@keyframes particle-float {
-  0% { transform: translateY(0px); opacity: 0; }
-  25% { opacity: 0.6; }
-  75% { opacity: 0.6; }
-  100% { transform: translateY(-100vh); opacity: 0; }
-}
-
-@keyframes orb-pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-@keyframes glow-pulse {
-  0% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.05); }
-  100% { opacity: 0.3; transform: scale(1); }
-}
-
-@keyframes orb-rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.animate-particle-float {
-  animation-name: particle-float;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-
-.animate-orb-pulse {
-  animation: orb-pulse 8s ease-in-out infinite;
-}
-
-.animate-glow-pulse {
-  animation: glow-pulse 8s ease-in-out infinite;
-}
-
-.animate-orb-rotate {
-  animation: orb-rotate 30s linear infinite;
 }
