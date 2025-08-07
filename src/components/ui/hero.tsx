@@ -17,11 +17,11 @@ const HeroSection = () => {
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <div className="max-w-3xl mx-auto text-center space-y-8">
             <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
-              <span className="text-gradient">Legal Clarity AI</span>
+              <span className="text-gradient">PolicyWise</span>
             </h1>
             
             <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed">
-              Making legal documents clear, actionable, and accessible for everyone.
+              Making policy documents clear, actionable, and accessible for everyone.
             </p>
           
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
