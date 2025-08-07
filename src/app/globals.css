@@ -30,17 +30,17 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
-     /* Custom variables for the particle background */
+    /* Custom variables for the particle background */
     --gradient-violet: radial-gradient(
-      circle at 20% 30%,
-      hsl(270 85% 60% / 0.1),
-      transparent 50%
-    );
+        circle at 20% 30%,
+        hsl(270 85% 60% / 0.1),
+        transparent 50%
+      );
     --gradient-blue: radial-gradient(
-      circle at 80% 70%,
-      hsl(220 85% 60% / 0.1),
-      transparent 50%
-    );
+        circle at 80% 70%,
+        hsl(220 85% 60% / 0.1),
+        transparent 50%
+      );
 
     /* Orb variables */
     --orb-glow: 270 85% 60%;
@@ -51,6 +51,13 @@
       hsl(220 85% 60% / 0.3) 100%
     );
     --shadow-glow: 0 0 40px 10px hsl(var(--orb-glow) / 0.2), 0 0 80px 20px hsl(var(--orb-glow) / 0.1);
+     /* Sidebar specific variables */
+    --sidebar: 224 71.4% 6%; /* Slightly lighter than background */
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-accent: 171 76% 40%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-ring: 171 76% 54%;
   }
 
   .dark {
@@ -78,6 +85,13 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+     /* Sidebar specific variables */
+    --sidebar: 224 71.4% 6%; /* Slightly lighter than background */
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-accent: 171 76% 40%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-ring: 171 76% 54%;
   }
 }
 
