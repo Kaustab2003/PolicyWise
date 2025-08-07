@@ -114,12 +114,10 @@ const askDocumentFlow = ai.defineFlow(
     }));
 
     const parsableDocuments = input.documents.map(doc => {
-      // The content could be a data URI for an image, or it could be pre-parsed text from a PDF/TXT.
-      // We check if it looks like a data URI that should be handled by the `media` helper.
+      // Check if the content is a data URI. If so, it should be handled by the `media` helper.
+      // Otherwise, it's pre-parsed text content and should be passed directly.
       const isMediaDataUri = doc.content.startsWith('data:');
-      
       const content = isMediaDataUri ? `{{media url="${doc.content}"}}` : doc.content;
-
       return { ...doc, content };
     });
     
