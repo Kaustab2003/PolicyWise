@@ -18,6 +18,9 @@ import {
   FileText,
   ShieldCheck,
   AlertTriangle,
+  Download,
+  Volume2,
+  Gift,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -26,14 +29,14 @@ import { Logo } from '@/components/logo';
 export default function AboutPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
-       <header className="p-4 border-b flex justify-between items-center sticky top-0 bg-background/80 backdrop-blur-sm z-10">
-          <Logo />
-          <nav>
-            <Button variant="ghost" asChild>
-              <Link href="/">Back to App</Link>
-            </Button>
-          </nav>
-        </header>
+      <header className="p-4 border-b flex justify-between items-center sticky top-0 bg-background/80 backdrop-blur-sm z-10">
+        <Logo />
+        <nav>
+          <Button variant="ghost" asChild>
+            <Link href="/">Back to App</Link>
+          </Button>
+        </nav>
+      </header>
       <main className="container mx-auto p-4 md:p-8 flex-1">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold mb-4 text-center text-primary">
@@ -43,6 +46,39 @@ export default function AboutPage() {
             Your intelligent assistant for analyzing, improving, and understanding
             policy documents.
           </p>
+
+          <Card className="mb-8 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center gap-3">
+                <Gift className="text-primary"/>
+                What&apos;s New
+              </CardTitle>
+               <CardDescription>
+                We&apos;ve added some powerful new features to make your workflow even smoother.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="flex items-center gap-4">
+                    <Download className="h-6 w-6 text-primary" />
+                    <div>
+                    <h4 className="font-semibold">Download & Print Reports</h4>
+                    <p className="text-sm text-muted-foreground">
+                        You can now download the detailed reports from the &quot;Improve Policy&quot; tool in various formats (TXT, JPG, PDF) or print them directly.
+                    </p>
+                    </div>
+                </div>
+                 <div className="flex items-center gap-4">
+                    <Volume2 className="h-6 w-6 text-primary" />
+                    <div>
+                    <h4 className="font-semibold">Text-to-Speech</h4>
+                    <p className="text-sm text-muted-foreground">
+                        Have the AI-generated summaries from the &quot;Ask Document&quot; tool read aloud to you. Just click the speaker icon next to a summary.
+                    </p>
+                    </div>
+                </div>
+            </CardContent>
+          </Card>
+
 
           <Card className="mb-8">
             <CardHeader>
@@ -68,17 +104,17 @@ export default function AboutPage() {
                   </p>
                   <ol className="list-decimal list-inside mt-2 space-y-1">
                     <li>
-                      Select "Query Policy" from the sidebar.
+                      Select &quot;Query Policy&quot; from the sidebar.
                     </li>
                     <li>
-                      Paste the full policy text into the "Policy Document" area.
+                      Paste the full policy text into the &quot;Policy Document&quot; area.
                     </li>
-                    <li>Type your question into the "Your Question" field.</li>
-                    <li>Click "Analyze Query".</li>
+                    <li>Type your question(s) into the input field and click &quot;Add&quot;.</li>
+                    <li>Click &quot;Analyze Queries&quot;.</li>
                   </ol>
                   <p className="mt-2 text-sm text-foreground/80">
                     The AI will return a direct summary, a confidence score, and
-                    the most relevant clauses from the document.
+                    the most relevant clauses from the document for each question.
                   </p>
                 </div>
               </div>
@@ -97,16 +133,16 @@ export default function AboutPage() {
                   </p>
                   <ol className="list-decimal list-inside mt-2 space-y-1">
                      <li>
-                      Select "Improve Policy" from the sidebar.
+                      Select &quot;Improve Policy&quot; from the sidebar.
                     </li>
                     <li>
-                      Paste your draft policy into the "Policy Document" area.
+                      Paste your draft policy into the &quot;Policy Document&quot; area or upload a file.
                     </li>
-                    <li>Click "Suggest Improvements".</li>
+                    <li>Click &quot;Suggest Improvements&quot;.</li>
                   </ol>
                   <p className="mt-2 text-sm text-foreground/80">
                     The AI will provide suggestions to enhance clarity,
-                    completeness, and fairness based on industry best practices.
+                    completeness, and fairness. You can then download or print the report.
                   </p>
                 </div>
               </div>
@@ -125,20 +161,19 @@ export default function AboutPage() {
                   </p>
                   <ol className="list-decimal list-inside mt-2 space-y-1">
                     <li>
-                      Select "Ask Document" from the sidebar.
+                      Select &quot;Ask Document&quot; from the sidebar.
                     </li>
                     <li>
-                      Click the "Select a file" button to upload a document.
+                      Click the &quot;Select files&quot; button to upload one or more documents.
                     </li>
                     <li>
-                      Once uploaded, type your question in the "Your Question"
-                      field.
+                      Once uploaded, type your question(s) in the input field.
                     </li>
-                    <li>Click "Ask Question".</li>
+                    <li>Click &quot;Ask Questions&quot;.</li>
                   </ol>
                   <p className="mt-2 text-sm text-foreground/80">
-                    The AI will provide a direct answer based solely on the
-                    information in your document.
+                    The AI will provide direct answers based solely on the
+                    information in your documents and remembers the conversation history.
                   </p>
                 </div>
               </div>
@@ -156,15 +191,15 @@ export default function AboutPage() {
                   </p>
                   <ol className="list-decimal list-inside mt-2 space-y-1">
                     <li>
-                      Select "Summarize Document" from the sidebar.
+                      Select &quot;Summarize Document&quot; from the sidebar.
                     </li>
                     <li>
-                      Click the "Select a file" button to upload a document.
+                      Click the &quot;Select a file&quot; button to upload a document.
                     </li>
-                    <li>Click "Generate Summary".</li>
+                    <li>Click &quot;Generate Summary&quot;.</li>
                   </ol>
                   <p className="mt-2 text-sm text-foreground/80">
-                    The AI will return a concise summary of the document's content in your selected language.
+                    The AI will return a concise summary and key points from the document's content.
                   </p>
                 </div>
               </div>
@@ -182,15 +217,15 @@ export default function AboutPage() {
                   </p>
                   <ol className="list-decimal list-inside mt-2 space-y-1">
                     <li>
-                      Select "Translate" from the sidebar.
+                      Select &quot;Translate&quot; from the sidebar.
                     </li>
                     <li>
-                      Paste the text you want to translate into the "Your Text" area.
+                      Paste the text you want to translate into the &quot;Your Text&quot; area.
                     </li>
                     <li>
                       Select your desired target language from the dropdown at the top right of the page.
                     </li>
-                    <li>Click "Translate Text".</li>
+                    <li>Click &quot;Translate Text&quot;.</li>
                   </ol>
                   <p className="mt-2 text-sm text-foreground/80">
                     The AI will return the translated text in the results panel.
@@ -211,18 +246,18 @@ export default function AboutPage() {
                   </p>
                   <ol className="list-decimal list-inside mt-2 space-y-1">
                      <li>
-                      Select "Compliance Checker" from the sidebar.
+                      Select &quot;Compliance Checker&quot; from the sidebar.
                     </li>
                     <li>
-                      Paste your draft policy into the "Policy Document" area.
+                      Paste your policy into the text area or upload a file.
                     </li>
                     <li>
-                      Enter the compliance standard (e.g., "GDPR", "HIPAA").
+                      Enter or select a compliance standard (e.g., &quot;GDPR&quot;, &quot;HIPAA&quot;).
                     </li>
-                    <li>Click "Check Compliance".</li>
+                    <li>Click &quot;Check Compliance&quot;.</li>
                   </ol>
                   <p className="mt-2 text-sm text-foreground/80">
-                    The AI will provide a detailed report on the policy's adherence to the specified standard.
+                    The AI will provide a detailed report on the policy&apos;s adherence to the specified standard.
                   </p>
                 </div>
               </div>
@@ -240,12 +275,12 @@ export default function AboutPage() {
                   </p>
                   <ol className="list-decimal list-inside mt-2 space-y-1">
                      <li>
-                      Select "Risk Detection" from the sidebar.
+                      Select &quot;Risk Detection&quot; from the sidebar.
                     </li>
                     <li>
-                      Paste your draft policy into the "Policy Document" area.
+                       Paste your policy into the text area or upload a file.
                     </li>
-                    <li>Click "Detect Risks".</li>
+                    <li>Click &quot;Detect Risks&quot;.</li>
                   </ol>
                   <p className="mt-2 text-sm text-foreground/80">
                     The AI will generate a report detailing potential risks and suggestions for mitigation.
@@ -277,8 +312,8 @@ export default function AboutPage() {
                   <h4 className="font-semibold">Multi-Language Support</h4>
                   <p className="text-sm text-muted-foreground">
                     Select your preferred language from the dropdown at the top right.
-                    All your questions and the AI's answers will be automatically
-                    translated, allowing you to work in the language you're most
+                    All your questions and the AI&apos;s answers will be automatically
+                    translated, allowing you to work in the language you&apos;re most
                     comfortable with.
                   </p>
                 </div>
@@ -292,6 +327,15 @@ export default function AboutPage() {
                     your question using your voice. The app will transcribe your
                     speech into text. This also works with your selected
                     language!
+                  </p>
+                </div>
+              </div>
+               <div className="flex items-center gap-4">
+                <Volume2 className="h-6 w-6 text-primary" />
+                <div>
+                  <h4 className="font-semibold">Audio Answers</h4>
+                  <p className="text-sm text-muted-foreground">
+                    In the &quot;Ask Document&quot; tab, click the speaker icon on a result card to have the summary read aloud to you.
                   </p>
                 </div>
               </div>
