@@ -2,16 +2,17 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
-import SplineViewer from "./spline-viewer";
+import Spline from '@splinetool/react-spline';
 
 const HeroSection = () => {
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Background Spline */}
-      <SplineViewer
-        url="https://prod.spline.design/ggrzYhCMz8JNfx33/scene.splinecode"
-        className="absolute inset-0 w-full h-full"
-      />
+      <div className="absolute inset-0 w-full h-full">
+        <Spline
+          scene="https://prod.spline.design/HLszoxKGKHhxlWs3/scene.splinecode"
+        />
+      </div>
       <div className="absolute inset-0 bg-background/80" />
       
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
