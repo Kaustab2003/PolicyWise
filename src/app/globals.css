@@ -29,9 +29,18 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-  
+
     /* Custom variables for the particle background */
-    --gradient-ai: radial-gradient(circle at 50% 50%, hsl(260 84% 60% / 0.15), transparent 70%);
+    --gradient-violet: radial-gradient(
+      circle at 20% 30%,
+      hsl(270 85% 60% / 0.1),
+      transparent 50%
+    );
+    --gradient-blue: radial-gradient(
+      circle at 80% 70%,
+      hsl(220 85% 60% / 0.1),
+      transparent 50%
+    );
   }
   .dark {
     --background: 240 10% 3.9%;
@@ -69,7 +78,12 @@
     @apply bg-background text-foreground;
     font-family: 'PT Sans', sans-serif;
   }
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Playfair Display', serif;
   }
 }
@@ -90,7 +104,6 @@
   }
 }
 
-
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -99,5 +112,17 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
   }
 }

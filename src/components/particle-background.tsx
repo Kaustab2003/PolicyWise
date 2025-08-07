@@ -19,9 +19,17 @@ const ParticleBackground = ({ className }: { className?: string }) => {
 
   return (
     <div 
-        className={cn("absolute inset-0 overflow-hidden", className)} 
-        style={{ background: 'var(--gradient-ai)' }}
-    />
+        className={cn("absolute inset-0 overflow-hidden -z-10", className)} 
+    >
+      <div 
+        className="absolute inset-0 transition-opacity duration-1000 ease-in-out animate-[pulse-glow_20s_ease-in-out_infinite]"
+        style={{ background: 'var(--gradient-violet)' }}
+      />
+      <div 
+        className="absolute inset-0 transition-opacity duration-1000 ease-in-out animate-[pulse-glow_20s_ease-in-out_infinite_10s]"
+        style={{ background: 'var(--gradient-blue)' }}
+      />
+    </div>
   );
 };
 
