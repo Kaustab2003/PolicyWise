@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -17,8 +18,12 @@ const particleCount = 50; // Number of particles
 const ParticleBackground = ({ className }: { className?: string }) => {
   const { theme } = useTheme();
   const [particles, setParticles] = useState<Particle[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    // This ensures this code runs only on the client, avoiding hydration mismatches.
+    setIsClient(true);
+
     const generateParticles = () => {
       const newParticles: Particle[] = [];
       for (let i = 0; i < particleCount; i++) {
@@ -36,7 +41,9 @@ const ParticleBackground = ({ className }: { className?: string }) => {
     generateParticles();
   }, []);
 
-  if (theme !== 'dark') {
+  if (!isClient || theme !== 'dark') {
+    // Don't render anything on the server, or if the theme is not dark.
+    // This prevents the hydration error.
     return null;
   }
 
