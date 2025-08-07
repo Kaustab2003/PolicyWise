@@ -1753,7 +1753,7 @@ export default function App() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-full">
+      <div className="flex h-full bg-background/50">
         <Sidebar collapsible="icon" variant="sidebar">
           <SidebarHeader>
             <Logo />

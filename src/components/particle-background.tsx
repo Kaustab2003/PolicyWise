@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -39,15 +40,15 @@ const ParticleBackground = ({ className }: { className?: string }) => {
   }
 
   return (
-    <div className={cn("particle-background", className)} style={{ background: 'var(--gradient-ai)' }}>
+    <div className={cn("particle-background absolute inset-0 overflow-hidden", className)} style={{ background: 'var(--gradient-ai)' }}>
       {/* Floating Particles */}
       {particles.map((particle) => (
         <div
           key={particle.id}
-          className="particle w-1 h-1 bg-primary rounded-full opacity-40 animate-particle-float"
+          className="particle absolute w-1 h-1 bg-primary rounded-full opacity-40 animate-particle-float"
           style={{
             left: `${particle.x}%`,
-            top: `${particle.y}%`,
+            top: `calc(100% + ${particle.y}px)`, // Start from bottom
             animationDelay: `${particle.delay}s`,
             animationDuration: `${particle.duration}s`,
             boxShadow: '0 0 10px hsl(var(--primary))',
@@ -56,7 +57,7 @@ const ParticleBackground = ({ className }: { className?: string }) => {
       ))}
 
       {/* Main Orb */}
-      <div className="orb-container">
+      <div className="orb-container absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
         {/* Outer Glow */}
         <div className="absolute -inset-24 opacity-30 animate-orb-rotate">
           <div 
