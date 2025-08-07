@@ -41,6 +41,16 @@
       hsl(220 85% 60% / 0.1),
       transparent 50%
     );
+
+    /* Orb variables */
+    --orb-glow: 270 85% 60%;
+    --gradient-orb: radial-gradient(
+      circle,
+      hsl(270 85% 60% / 0.8) 0%,
+      hsl(270 85% 60% / 0.4) 50%,
+      hsl(220 85% 60% / 0.3) 100%
+    );
+    --shadow-glow: 0 0 40px 10px hsl(var(--orb-glow) / 0.2), 0 0 80px 20px hsl(var(--orb-glow) / 0.1);
   }
 
   .dark {
@@ -136,4 +146,28 @@
     transform: scale(1.1);
     opacity: 0.8;
   }
+}
+
+/* New animations for particle background */
+@keyframes particle-float {
+  0% { transform: translateY(0) translateX(0); opacity: 0.4; }
+  50% { transform: translateY(-20px) translateX(5px); opacity: 0.8; }
+  100% { transform: translateY(0) translateX(0); opacity: 0.4; }
+}
+
+@keyframes orb-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes glow-pulse {
+  0% { opacity: 0.3; transform: scale(0.95); }
+  50% { opacity: 0.5; transform: scale(1.05); }
+  100% { opacity: 0.3; transform: scale(0.95); }
+}
+
+@keyframes orb-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
